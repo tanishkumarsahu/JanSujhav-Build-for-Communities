@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation as useRouteLocation } from 'react-router-dom';
 import Navbar from './components/Navbar.jsx';
 import CitizenSubmissionForm from './components/CitizenSubmissionForm.jsx';
 import WhatsAppSimulation from './components/WhatsAppSimulation.jsx';
@@ -501,45 +502,98 @@ function SettingsPage({ user, onLogout }) {
 }
 
 // ─── App (root) ───────────────────────────────────────────────────────────────
-export default function App() {
+// ─── App (root) ───────────────────────────────────────────────────────────────
+function AppContent() {
   const [user, setUser] = useState(() => {
     try { return JSON.parse(localStorage.getItem('pp_user')); } catch { return null; }
   });
   const [token] = useState(() => getToken());
-  const [view, setView] = useState(() => {
-    const storedUser = (() => { try { return JSON.parse(localStorage.getItem('pp_user')); } catch { return null; } })();
-    if (storedUser) {
-      return storedUser.role === 'mp' ? 'mp-dashboard' : 'citizen';
-    }
-    return 'landing';
-  });
 
+  const navigate = useNavigate();
+  const location = useRouteLocation();
   const { constituency, lat, lon } = useLocation();
 
   const handleAuthSuccess = useCallback((userData, authToken) => {
     setUser(userData);
     localStorage.setItem('pp_user', JSON.stringify(userData));
     if (authToken) setToken(authToken);
-    const nextView = userData?.role === 'mp' ? 'mp-dashboard' : 'citizen';
-    setView(nextView);
-  }, []);
+    const nextPath = userData?.role === 'mp' ? '/mp-dashboard' : '/citizen';
+    navigate(nextPath);
+  }, [navigate]);
 
   const handleLogout = useCallback(() => {
     setUser(null);
     clearToken();
     localStorage.removeItem('pp_user');
-    setView('landing');
-  }, []);
+    navigate('/');
+  }, [navigate]);
 
   const handleNavigate = useCallback((targetView) => {
-    // Guard MP dashboard behind auth
-    if (targetView === 'mp-dashboard' && !user) {
-      setView('login');
-      return;
-    }
-    setView(targetView);
-  }, [user]);
+    const viewToRoute = {
+      'landing': '/',
+      'login': '/login',
+      'register': '/register',
+      'citizen': '/citizen',
+      'whatsapp': '/whatsapp',
+      'mp-dashboard': '/mp-dashboard',
+      'news': '/news',
+      'settings': '/settings'
+    };
+    navigate(viewToRoute[targetView] || '/');
+  }, [navigate]);
 
+  const getActiveView = () => {
+    const path = location.pathname;
+    if (path === '/') return 'landing';
+    if (path === '/login') return 'login';
+    if (path === '/register') return 'register';
+    if (path === '/citizen') return 'citizen';
+    if (path === '/whatsapp') return 'whatsapp';
+    if (path === '/mp-dashboard') return 'mp-dashboard';
+    if (path === '/news') return 'news';
+    if (path === '/settings') return 'settings';
+    return 'landing';
+  };
+  const currentView = getActiveView();
+
+  return (
+    <div style={{ minHeight: '100vh', backgroundColor: '#F8F9FA' }}>
+      <Navbar
+        user={user}
+        onNavigate={handleNavigate}
+        onLogout={handleLogout}
+        currentView={currentView}
+      />
+      <main>
+        <Routes>
+          <Route path="/" element={<LandingPage onNavigate={handleNavigate} constituency={constituency} />} />
+          <Route path="/login" element={<AuthForm mode="login" onSuccess={handleAuthSuccess} onSwitch={() => navigate('/register')} />} />
+          <Route path="/register" element={<AuthForm mode="register" onSuccess={handleAuthSuccess} onSwitch={() => navigate('/login')} />} />
+          <Route path="/citizen" element={<CitizenSubmissionForm constituency={constituency} />} />
+          <Route path="/whatsapp" element={<WhatsAppSimulation constituency={constituency} />} />
+          <Route path="/mp-dashboard" element={
+            user && user.role === 'mp' ? (
+              <MPDashboard constituency={constituency} />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          } />
+          <Route path="/news" element={<NewsFeed constituency={constituency} />} />
+          <Route path="/settings" element={
+            user ? (
+              <SettingsPage user={user} onLogout={handleLogout} />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          } />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </main>
+    </div>
+  );
+}
+
+export default function App() {
   // Load Google Identity Services script
   useEffect(() => {
     if (!GOOGLE_CLIENT_ID) return;
@@ -551,60 +605,9 @@ export default function App() {
     document.head.appendChild(script);
   }, []);
 
-  const renderView = () => {
-    switch (view) {
-      case 'landing':
-        return <LandingPage onNavigate={handleNavigate} constituency={constituency} />;
-      case 'login':
-        return (
-          <AuthForm
-            mode="login"
-            onSuccess={handleAuthSuccess}
-            onSwitch={() => setView('register')}
-          />
-        );
-      case 'register':
-        return (
-          <AuthForm
-            mode="register"
-            onSuccess={handleAuthSuccess}
-            onSwitch={() => setView('login')}
-          />
-        );
-      case 'citizen':
-        return <CitizenSubmissionForm constituency={constituency} />;
-      case 'whatsapp':
-        return <WhatsAppSimulation constituency={constituency} />;
-      case 'mp-dashboard':
-        return user ? (
-          <MPDashboard constituency={constituency} />
-        ) : (
-          <AuthForm
-            mode="login"
-            onSuccess={handleAuthSuccess}
-            onSwitch={() => setView('register')}
-          />
-        );
-      case 'news':
-        return <NewsFeed constituency={constituency} />;
-      case 'settings':
-        return <SettingsPage user={user} onLogout={handleLogout} />;
-      default:
-        return <LandingPage onNavigate={handleNavigate} constituency={constituency} />;
-    }
-  };
-
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#F8F9FA' }}>
-      <Navbar
-        user={user}
-        onNavigate={handleNavigate}
-        onLogout={handleLogout}
-        currentView={view}
-      />
-      <main>
-        {renderView()}
-      </main>
-    </div>
+    <Router>
+      <AppContent />
+    </Router>
   );
 }
