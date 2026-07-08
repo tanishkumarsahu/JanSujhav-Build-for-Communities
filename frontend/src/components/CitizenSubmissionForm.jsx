@@ -1,17 +1,21 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { Mic, MicOff, CheckCircle, Camera, MapPin, X, AlertCircle, Loader, User, HelpCircle, FileText, Globe } from 'lucide-react';
+import { 
+  Mic, MicOff, CheckCircle, Camera, MapPin, X, AlertCircle, Loader, 
+  User, HelpCircle, FileText, Globe, Route, Droplets, GraduationCap, 
+  Activity, Zap, Trash2 
+} from 'lucide-react';
 import useVoiceInput from '../hooks/useVoiceInput.js';
 import useLocation from '../hooks/useLocation.js';
 import { post, get } from '../utils/api.js';
 
 const CATEGORIES = [
-  { id: 'Roads', label: 'Roads', emoji: '🛣️', desc: 'Potholes, paving, traffic lights' },
-  { id: 'Water', label: 'Water', emoji: '🚰', desc: 'Pipelines, leaks, drinking water' },
-  { id: 'Education', label: 'Education', emoji: '🏫', desc: 'School infrastructure, labs' },
-  { id: 'Health', label: 'Health', emoji: '🏥', desc: 'Hospitals, clinics, medical supply' },
-  { id: 'Electricity', label: 'Electricity', emoji: '⚡', desc: 'Powerlines, blackouts, streetlights' },
-  { id: 'Sanitation', label: 'Sanitation', emoji: '🧹', desc: 'Garbage, drains, public toilets' },
-  { id: 'Other', label: 'Other', emoji: '📁', desc: 'Any other issues or proposals' },
+  { id: 'Roads', label: 'Roads', icon: Route, desc: 'Potholes, paving, traffic lights' },
+  { id: 'Water', label: 'Water', icon: Droplets, desc: 'Pipelines, leaks, drinking water' },
+  { id: 'Education', label: 'Education', icon: GraduationCap, desc: 'School infrastructure, labs' },
+  { id: 'Health', label: 'Health', icon: Activity, desc: 'Hospitals, clinics, medical supply' },
+  { id: 'Electricity', label: 'Electricity', icon: Zap, desc: 'Powerlines, blackouts, streetlights' },
+  { id: 'Sanitation', label: 'Sanitation', icon: Trash2, desc: 'Garbage, drains, public toilets' },
+  { id: 'Other', label: 'Other', icon: HelpCircle, desc: 'Any other issues or proposals' },
 ];
 
 const LANGUAGES = [
@@ -473,8 +477,11 @@ export default function CitizenSubmissionForm({ constituency: propConstituency, 
                           }
                         }}
                       >
-                        <div style={{ fontSize: '18px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span>{cat.emoji}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          {(() => {
+                            const IconComponent = cat.icon;
+                            return <IconComponent size={16} color={active ? cs.color : '#64748B'} />;
+                          })()}
                           <span style={{ fontSize: '13px', fontWeight: 700 }}>{cat.label}</span>
                         </div>
                         <span style={{ fontSize: '11px', color: active ? cs.color : '#64748B', lineHeight: '1.3' }}>
