@@ -9,12 +9,12 @@ const cors = require('cors');
 const { initializeDatabase } = require('./db');
 const { startNewsPoller } = require('./newsPoller');
 
-// Route modules
 const authRoutes = require('./routes/authRoutes');
 const citizenRoutes = require('./routes/citizenRoutes');
 const mpRoutes = require('./routes/mpRoutes');
 const newsRoutes = require('./routes/newsRoutes');
 const aiRoutes = require('./routes/aiRoutes');
+const proposalRoutes = require('./routes/proposalRoutes');
 
 // ---------------------------------------------------------------------------
 // App setup
@@ -69,6 +69,7 @@ app.use('/api/citizen', citizenRoutes);
 app.use('/api/mp', mpRoutes);
 app.use('/api/news', newsRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/proposals', proposalRoutes);
 
 // ---------------------------------------------------------------------------
 // 404 handler — must come after all valid routes

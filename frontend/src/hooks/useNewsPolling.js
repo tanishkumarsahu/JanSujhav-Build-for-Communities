@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { get } from '../utils/api.js';
+import { get, post } from '../utils/api.js';
 
 /**
  * useNewsPolling — fetches and polls news articles from the API
@@ -24,6 +24,7 @@ export default function useNewsPolling({
 
   const intervalRef = useRef(null);
   const abortRef = useRef(null);
+  const lastScrapedConstituency = useRef(null);
 
   const buildQueryString = useCallback((constituency, filters) => {
     const params = new URLSearchParams();
@@ -54,9 +55,24 @@ export default function useNewsPolling({
         const path = `/api/news${qs ? `?${qs}` : ''}`;
         const data = await get(path, false);
 
-        setArticles(Array.isArray(data?.articles) ? data.articles : (Array.isArray(data) ? data : []));
+        const fetchedArticles = Array.isArray(data?.articles) ? data.articles : (Array.isArray(data) ? data : []);
+        setArticles(fetchedArticles);
         setTotal(data?.total ?? (Array.isArray(data) ? data.length : 0));
         setLastRefreshedAt(new Date());
+
+        // On first load, if no articles and we have a constituency, trigger a background scrape
+        if (fetchedArticles.length === 0 && constituency && lastScrapedConstituency.current !== constituency) {
+          lastScrapedConstituency.current = constituency;
+          (async () => {
+            try {
+              await post('/api/news/refresh', { constituency }, false);
+              // Re-fetch articles now that they are stored in the DB
+              fetchNews(constituency, filters);
+            } catch (err) {
+              console.error('[News] Background scrape trigger failed:', err.message);
+            }
+          })();
+        }
       } catch (err) {
         if (err.name !== 'AbortError') {
           setError(err.message || 'Failed to load news articles.');

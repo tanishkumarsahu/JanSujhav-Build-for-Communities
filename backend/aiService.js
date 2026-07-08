@@ -363,4 +363,5 @@ module.exports = {
   generateRecommendations,
   filterNewsByQuery,
   enrichNewsArticle,
+  generateContentWithFallbacks,
 };

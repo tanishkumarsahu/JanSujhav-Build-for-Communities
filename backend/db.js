@@ -125,11 +125,25 @@ CREATE TABLE IF NOT EXISTS constituency_news (
     UNIQUE(source_url, constituency)
 );
 
+CREATE TABLE IF NOT EXISTS proposals (
+    proposal_id VARCHAR(50) PRIMARY KEY,
+    category VARCHAR(100) NOT NULL,
+    constituency VARCHAR(255) NOT NULL,
+    ward_id VARCHAR(50) NOT NULL,
+    location_lat DOUBLE PRECISION,
+    location_lng DOUBLE PRECISION,
+    location_area VARCHAR(255),
+    structural_data JSONB NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE INDEX IF NOT EXISTS idx_news_constituency ON constituency_news(constituency);
 CREATE INDEX IF NOT EXISTS idx_news_published_at ON constituency_news(published_at DESC);
 CREATE INDEX IF NOT EXISTS idx_news_category ON constituency_news(category);
 CREATE INDEX IF NOT EXISTS idx_suggestions_constituency ON suggestions(constituency);
 CREATE INDEX IF NOT EXISTS idx_suggestions_category ON suggestions(category);
+CREATE INDEX IF NOT EXISTS idx_proposals_constituency ON proposals(constituency);
+CREATE INDEX IF NOT EXISTS idx_proposals_category ON proposals(category);
 `;
 
 // ---------------------------------------------------------------------------
@@ -275,6 +289,37 @@ async function initializeDatabase() {
     }
   } catch (err) {
     console.error('[DB] Suggestions seed error:', err.message);
+  }
+
+  // ---- Seed proposals ----
+  try {
+    const { rows: existingProposals } = await pool.query('SELECT COUNT(*) AS cnt FROM proposals');
+    if (parseInt(existingProposals[0].cnt, 10) === 0) {
+      console.log('[DB] Seeding proposals...');
+      const { STRUCTURAL_DATA } = require('./structuralData');
+      for (const [category, proposals] of Object.entries(STRUCTURAL_DATA)) {
+        for (const p of proposals) {
+          await pool.query(
+            `INSERT INTO proposals (proposal_id, category, constituency, ward_id, location_lat, location_lng, location_area, structural_data)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+             ON CONFLICT (proposal_id) DO NOTHING`,
+            [
+              p.proposal_id,
+              category,
+              p.constituency,
+              p.ward_id,
+              p.location?.lat || null,
+              p.location?.lng || null,
+              p.location?.area || null,
+              JSON.stringify(p)
+            ]
+          );
+        }
+      }
+      console.log('[DB] Seeded proposals successfully.');
+    }
+  } catch (err) {
+    console.error('[DB] Proposals seed error:', err.message);
   }
 
   console.log('[DB] initializeDatabase complete.');
