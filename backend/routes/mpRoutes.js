@@ -2,9 +2,20 @@
 
 const express = require('express');
 const router = express.Router();
+const fs = require('fs');
+const path = require('path');
 const { query } = require('../db');
 const { authMiddleware } = require('../auth');
 const aiService = require('../aiService');
+
+// Load structural datasets
+const structuralDatasetsPath = path.join(__dirname, '../data/structural_datasets.json');
+let structuralData = { constituencies: {} };
+try {
+  structuralData = JSON.parse(fs.readFileSync(structuralDatasetsPath, 'utf8'));
+} catch (err) {
+  console.error('[MP] Failed to load structural datasets:', err.message);
+}
 
 const VALID_STATUSES = ['proposed', 'approved', 'rejected', 'in_progress', 'completed'];
 const VALID_SUGGESTION_STATUSES = ['pending', 'reviewed', 'implemented', 'rejected'];
@@ -185,7 +196,7 @@ router.post('/generate-recommendations', authMiddleware, async (req, res) => {
 
     const c = constituency.trim();
 
-    // Fetch all required data in parallel
+    // Fetch all pending suggestions, demographics, and infrastructure gaps
     const [suggestionsResult, demographicsResult, gapsResult] = await Promise.all([
       query("SELECT * FROM suggestions WHERE constituency = $1 AND status = 'pending'", [c]),
       query('SELECT * FROM demographics WHERE constituency = $1', [c]),
@@ -203,40 +214,225 @@ router.post('/generate-recommendations', authMiddleware, async (req, res) => {
       });
     }
 
-    // Generate recommendations via AI
-    const recommendations = await aiService.generateRecommendations(
-      c,
-      suggestions,
-      demographics,
-      infrastructureGaps
-    );
+    // Group suggestions by category
+    const suggestionsByCategory = {};
+    for (const s of suggestions) {
+      if (!suggestionsByCategory[s.category]) {
+        suggestionsByCategory[s.category] = [];
+      }
+      suggestionsByCategory[s.category].push(s);
+    }
 
-    if (!recommendations || recommendations.length === 0) {
-      return res.status(500).json({
-        success: false,
-        error: 'AI could not generate recommendations at this time. Please try again.',
+    // Structural facts for this constituency
+    const constData = structuralData.constituencies[c] || structuralData.constituencies['default'];
+
+    const proposals = [];
+    const now = new Date();
+
+    for (const cat of Object.keys(suggestionsByCategory)) {
+      const catSuggestions = suggestionsByCategory[cat];
+      const count = catSuggestions.length;
+
+      // 1. Citizen Signal Calculations
+      const avgSeverity = catSuggestions.reduce((sum, s) => {
+        let sev = 3.0;
+        if (s.sentiment === 'Negative') sev = 4.5;
+        if (s.sentiment === 'Positive') sev = 1.5;
+        return sum + sev;
+      }, 0) / count;
+
+      const uniqueSubmitters = new Set(catSuggestions.map(s => s.user_id || s.name || Math.random().toString())).size;
+
+      const oldestDate = catSuggestions.reduce((oldest, s) => {
+        const d = new Date(s.created_at);
+        return d < oldest ? d : oldest;
+      }, now);
+      const daysAgo = Math.max(1, Math.round((now - oldestDate) / (1000 * 60 * 60 * 24)));
+
+      const complaintCountFactor = Math.min(100, (Math.log(count + 1) / Math.log(15)) * 100);
+      const severityFactor = (avgSeverity / 5.0) * 100;
+      const recencyFactor = Math.min(100, (daysAgo / 120.0) * 100); // normalized over 4 months
+
+      const citizenScore = Math.round(0.3 * complaintCountFactor + 0.5 * severityFactor + 0.2 * recencyFactor);
+      const citizenDetail = `${count} citizen report(s) (${uniqueSubmitters} unique submitter(s)), average severity ${avgSeverity.toFixed(1)}/5, unresolved for ${daysAgo} day(s).`;
+
+      // 2. Structural Signal Calculations
+      let structuralScore = 50;
+      let structuralDetail = '';
+      let targetFacility = 'Constituency Upgrades';
+      let rawStructural = {};
+
+      if (cat === 'Education') {
+        const edu = constData.Education;
+        targetFacility = edu.target_facility;
+        const ratio = edu.enrollment_capacity_ratio || 1.25;
+        const dist = edu.distance_to_nearest_alt_school_km || 5.0;
+
+        const overcapacityFactor = Math.min(100, Math.max(0, ((ratio - 1.0) / 0.6) * 100));
+        const distanceFactor = Math.min(100, (dist / 10.0) * 100);
+
+        structuralScore = Math.round(0.5 * overcapacityFactor + 0.5 * distanceFactor);
+        structuralDetail = `Overcapacity at ${(ratio * 100).toFixed(0)}% capacity; nearest alternative school is ${dist} km away.`;
+        rawStructural = { enrollment_capacity_ratio: ratio, distance_to_nearest_alt_school_km: dist };
+      } else if (cat === 'Roads') {
+        const road = constData.Roads;
+        targetFacility = road.target_facility;
+        const accidents = road.accident_count_12m || 8;
+        const traffic = road.traffic_volume_index || 6.0;
+        const wards = road.connects_wards_count || 3;
+
+        const accidentFactor = Math.min(100, (accidents / 25.0) * 100);
+        const trafficFactor = (traffic / 10.0) * 100;
+        const connectedFactor = Math.min(100, (wards / 8.0) * 100);
+
+        structuralScore = Math.round(0.4 * accidentFactor + 0.3 * trafficFactor + 0.3 * connectedFactor);
+        structuralDetail = `${accidents} accident(s) reported in the last 12 months, traffic congestion index ${traffic}/10, linking ${wards} wards.`;
+        rawStructural = { accident_count_12m: accidents, traffic_volume_index: traffic, connects_wards_count: wards };
+      } else if (cat === 'Other') {
+        const voc = constData.Other;
+        targetFacility = voc.target_facility;
+        const unemp = voc.youth_unemployment_rate_pct || 20.0;
+        const dist = voc.nearest_vocational_centre_distance_km || 7.0;
+        const demand = voc.local_industry_demand_index || 7.0;
+
+        const unemploymentFactor = Math.min(100, (unemp / 30.0) * 100);
+        const distanceFactor = Math.min(100, (dist / 15.0) * 100);
+        const industryFactor = (demand / 10.0) * 100;
+
+        structuralScore = Math.round(0.4 * unemploymentFactor + 0.3 * distanceFactor + 0.3 * industryFactor);
+        structuralDetail = `Youth unemployment is at ${unemp}%, nearest vocational center is ${dist} km away, local industry demand is ${demand}/10.`;
+        rawStructural = { youth_unemployment_rate_pct: unemp, nearest_vocational_centre_distance_km: dist, local_industry_demand_index: demand };
+      } else {
+        // Fallback for Water, Health, Electricity, Sanitation, etc.
+        const matchingGaps = infrastructureGaps.filter(g => g.gap_type.toLowerCase().includes(cat.toLowerCase()));
+        let maxSeverity = 50;
+        let gapDesc = 'No matching infrastructure gap records found.';
+        if (matchingGaps.length > 0) {
+          const sevMap = { 'High': 85, 'Medium': 65, 'Low': 45 };
+          maxSeverity = Math.max(...matchingGaps.map(g => sevMap[g.severity] || 45));
+          gapDesc = matchingGaps[0].description;
+        }
+        structuralScore = maxSeverity;
+        structuralDetail = `Infrastructure Gap Report: ${gapDesc}`;
+        rawStructural = { max_severity: maxSeverity, matching_gaps_count: matchingGaps.length };
+        targetFacility = `Constituency ${cat} Upgrades`;
+      }
+
+      // 3. Combine signals into Demand Score (0-100)
+      const demandScore = Math.round(0.4 * citizenScore + 0.6 * structuralScore);
+
+      // Category-specific Titles/Descriptions
+      let title = `Systemic ${cat} Infrastructure Expansion`;
+      let description = `Address key public service gaps and citizen concerns related to municipal ${cat.toLowerCase()} systems.`;
+      let estCost = 5000000; // 50 Lakhs default
+
+      if (cat === 'Education') {
+        title = `Facility Renovation & Expansion: ${targetFacility}`;
+        description = `Expand school capacity, build new classrooms, and upgrade learning facilities to resolve overcapacity and reduce travel distances.`;
+        estCost = 12000000;
+      } else if (cat === 'Roads') {
+        title = `Safety Upgrade & Traffic Management: ${targetFacility}`;
+        description = `Repair key road surfaces, install safety dividers at high-risk accident points, and widen bottlenecks to streamline flow.`;
+        estCost = 8500000;
+      } else if (cat === 'Other') {
+        title = `Skill Development Center: ${targetFacility}`;
+        description = `Establish a vocational training center providing local youth with technical certifications aligned with municipal industry demand.`;
+        estCost = 15000000;
+      } else if (cat === 'Water') {
+        title = `Drinking Water Pipe Network Expansion`;
+        description = `Lay new supply connections, install public filtration points, and repair leaking supply networks in high-demand wards.`;
+        estCost = 6500000;
+      } else if (cat === 'Health') {
+        title = `Primary Health Centre Upgrades`;
+        description = `Equip local medical centres with diagnostic machinery and emergency care tools to improve ward access metrics.`;
+        estCost = 9000000;
+      }
+
+      // Add slight variation to cost based on complaint counts
+      estCost = Math.round(estCost * (1 + (count * 0.04)));
+
+      proposals.push({
+        title,
+        description,
+        category: cat,
+        priority_score: demandScore,
+        estimated_cost: estCost,
+        rationale: `Fuses a citizen urgency score of ${citizenScore}/100 with a structural need score of ${structuralScore}/100.`,
+        supporting_suggestions_count: count,
+        citizen_signal: {
+          score: citizenScore,
+          detail: citizenDetail,
+          complaint_count: count,
+          avg_severity: parseFloat(avgSeverity.toFixed(1)),
+          unique_submitters: uniqueSubmitters,
+          days_ago: daysAgo
+        },
+        structural_signal: {
+          score: structuralScore,
+          detail: structuralDetail,
+          target_facility: targetFacility,
+          ...rawStructural
+        },
+        score_breakdown: {
+          citizen_component: { value: citizenScore, detail: citizenDetail },
+          structural_component: { value: structuralScore, detail: structuralDetail },
+          final_score: demandScore
+        }
       });
     }
 
-    // Clear old recommendations for this constituency and insert new ones
+    // Sort proposals by priority_score descending
+    proposals.sort((a, b) => b.priority_score - a.priority_score);
+
+    // 4. Generate comparison notes sequentially
+    for (let i = 0; i < proposals.length; i++) {
+      const p = proposals[i];
+      if (i < proposals.length - 1) {
+        const pNext = proposals[i + 1];
+        p.score_breakdown.comparison_note = await aiService.generateComparisonNote(
+          {
+            title: p.title,
+            category: p.category,
+            priority_score: p.priority_score,
+            citizen_detail: p.citizen_signal.detail,
+            structural_detail: p.structural_signal.detail
+          },
+          {
+            title: pNext.title,
+            category: pNext.category,
+            priority_score: pNext.priority_score,
+            citizen_detail: pNext.citizen_signal.detail,
+            structural_detail: pNext.structural_signal.detail
+          }
+        );
+      } else {
+        p.score_breakdown.comparison_note = `Represents a critical local priority reflecting a balanced score of ${p.priority_score}/100 across both civic and structural parameters.`;
+      }
+    }
+
+    // Clear old recommendations for this constituency
     await query('DELETE FROM ai_recommendations WHERE constituency = $1', [c]);
 
     const inserted = [];
-    for (const rec of recommendations) {
+    for (const p of proposals) {
       const { rows } = await query(
         `INSERT INTO ai_recommendations
-           (constituency, title, description, category, priority_score, estimated_cost, rationale, supporting_suggestions_count, status)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'proposed')
+           (constituency, title, description, category, priority_score, estimated_cost, rationale, 
+            supporting_suggestions_count, status, citizen_signal, structural_signal, score_breakdown)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'proposed', $9, $10, $11)
          RETURNING *`,
         [
           c,
-          rec.title,
-          rec.description,
-          rec.category,
-          rec.priority_score,
-          rec.estimated_cost || 0,
-          rec.rationale,
-          rec.supporting_suggestions_count || 0,
+          p.title,
+          p.description,
+          p.category,
+          p.priority_score,
+          p.estimated_cost,
+          p.rationale,
+          p.supporting_suggestions_count,
+          JSON.stringify(p.citizen_signal),
+          JSON.stringify(p.structural_signal),
+          JSON.stringify(p.score_breakdown)
         ]
       );
       inserted.push(rows[0]);

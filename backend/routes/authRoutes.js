@@ -228,4 +228,78 @@ router.put('/me/constituency', authMiddleware, async (req, res) => {
   }
 });
 
+// ---------------------------------------------------------------------------
+// PUT /api/auth/me/profile
+// ---------------------------------------------------------------------------
+router.put('/me/profile', authMiddleware, async (req, res) => {
+  try {
+    const { name } = req.body;
+
+    if (!name || typeof name !== 'string' || name.trim().length === 0) {
+      return res.status(400).json({ success: false, error: 'Name is required' });
+    }
+
+    const { rows } = await query(
+      'UPDATE users SET name = $1 WHERE id = $2 RETURNING *',
+      [name.trim(), req.user.id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: { user: sanitizeUser(rows[0]) },
+    });
+  } catch (err) {
+    console.error('[Auth] /me/profile error:', err.message);
+    return res.status(500).json({ success: false, error: 'Failed to update profile name' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// PUT /api/auth/me/password
+// ---------------------------------------------------------------------------
+router.put('/me/password', authMiddleware, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || typeof currentPassword !== 'string' || currentPassword.length === 0) {
+      return res.status(400).json({ success: false, error: 'Current password is required' });
+    }
+    if (!newPassword || typeof newPassword !== 'string' || newPassword.length < 6) {
+      return res.status(400).json({ success: false, error: 'New password must be at least 6 characters' });
+    }
+
+    // Fetch user with password_hash
+    const { rows } = await query('SELECT * FROM users WHERE id = $1', [req.user.id]);
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+
+    const user = rows[0];
+    if (user.password_hash) {
+      const isMatch = await comparePassword(currentPassword, user.password_hash);
+      if (!isMatch) {
+        return res.status(400).json({ success: false, error: 'Incorrect current password' });
+      }
+    } else {
+      // User registered via Google OAuth and has no password set yet
+      return res.status(400).json({ success: false, error: 'Social logins cannot change password' });
+    }
+
+    const newHash = await hashPassword(newPassword);
+    await query('UPDATE users SET password_hash = $1 WHERE id = $2', [newHash, req.user.id]);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Password updated successfully',
+    });
+  } catch (err) {
+    console.error('[Auth] /me/password error:', err.message);
+    return res.status(500).json({ success: false, error: 'Failed to update password' });
+  }
+});
+
 module.exports = router;

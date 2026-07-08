@@ -100,6 +100,9 @@ CREATE TABLE IF NOT EXISTS ai_recommendations (
     rationale TEXT NOT NULL,
     supporting_suggestions_count INTEGER DEFAULT 0,
     status VARCHAR(50) DEFAULT 'proposed',
+    citizen_signal JSONB,
+    structural_signal JSONB,
+    score_breakdown JSONB,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -204,6 +207,9 @@ async function initializeDatabase() {
     await pool.query('ALTER TABLE suggestions ADD COLUMN IF NOT EXISTS ai_tags JSONB');
     await pool.query('ALTER TABLE suggestions ADD COLUMN IF NOT EXISTS translated_text TEXT');
     await pool.query('ALTER TABLE suggestions ADD COLUMN IF NOT EXISTS sentiment VARCHAR(50)');
+    await pool.query('ALTER TABLE ai_recommendations ADD COLUMN IF NOT EXISTS citizen_signal JSONB');
+    await pool.query('ALTER TABLE ai_recommendations ADD COLUMN IF NOT EXISTS structural_signal JSONB');
+    await pool.query('ALTER TABLE ai_recommendations ADD COLUMN IF NOT EXISTS score_breakdown JSONB');
     console.log('[DB] Schema ready.');
   } catch (err) {
     console.error('[DB] Schema migration failed:', err.message);

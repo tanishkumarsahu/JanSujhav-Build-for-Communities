@@ -1,0 +1,130 @@
+{
+  "constituencies": {
+    "Varanasi": {
+      "Education": {
+        "target_facility": "Varanasi Central Secondary School",
+        "current_enrollment": 1420,
+        "total_capacity": 1000,
+        "enrollment_capacity_ratio": 1.42,
+        "distance_to_nearest_alt_school_km": 8.2
+      },
+      "Roads": {
+        "target_facility": "Ghat Road Bypass (Ward 12)",
+        "accident_count_12m": 14,
+        "traffic_volume_index": 8.5,
+        "connects_wards_count": 5
+      },
+      "Other": {
+        "target_facility": "Kashi Skill Development Hub",
+        "youth_unemployment_rate_pct": 24.5,
+        "nearest_vocational_centre_distance_km": 12.0,
+        "local_industry_demand_index": 9.0
+      }
+    },
+    "Lucknow": {
+      "Education": {
+        "target_facility": "Hazratganj Primary School",
+        "current_enrollment": 850,
+        "total_capacity": 600,
+        "enrollment_capacity_ratio": 1.41,
+        "distance_to_nearest_alt_school_km": 6.8
+      },
+      "Roads": {
+        "target_facility": "Ring Road Sector 4 (Ward 8)",
+        "accident_count_12m": 19,
+        "traffic_volume_index": 9.2,
+        "connects_wards_count": 7
+      },
+      "Other": {
+        "target_facility": "Awadh Vocational Institute",
+        "youth_unemployment_rate_pct": 22.1,
+        "nearest_vocational_centre_distance_km": 9.5,
+        "local_industry_demand_index": 7.5
+      }
+    },
+    "New Delhi": {
+      "Education": {
+        "target_facility": "Connaught Place Model School",
+        "current_enrollment": 1200,
+        "total_capacity": 1100,
+        "enrollment_capacity_ratio": 1.09,
+        "distance_to_nearest_alt_school_km": 3.5
+      },
+      "Roads": {
+        "target_facility": "Janpath Inner Circle (Ward 2)",
+        "accident_count_12m": 6,
+        "traffic_volume_index": 7.0,
+        "connects_wards_count": 4
+      },
+      "Other": {
+        "target_facility": "Lutyens Vocational Center",
+        "youth_unemployment_rate_pct": 14.8,
+        "nearest_vocational_centre_distance_km": 4.2,
+        "local_industry_demand_index": 6.0
+      }
+    },
+    "Mumbai North": {
+      "Education": {
+        "target_facility": "Borivali East Municipal School",
+        "current_enrollment": 2100,
+        "total_capacity": 1300,
+        "enrollment_capacity_ratio": 1.61,
+        "distance_to_nearest_alt_school_km": 9.8
+      },
+      "Roads": {
+        "target_facility": "SV Road Intersection (Ward 15)",
+        "accident_count_12m": 28,
+        "traffic_volume_index": 9.8,
+        "connects_wards_count": 9
+      },
+      "Other": {
+        "target_facility": "Kandivali Youth Training Hub",
+        "youth_unemployment_rate_pct": 28.2,
+        "nearest_vocational_centre_distance_km": 14.5,
+        "local_industry_demand_index": 8.5
+      }
+    },
+    "Bengaluru Central": {
+      "Education": {
+        "target_facility": "Shivajinagar Government High School",
+        "current_enrollment": 980,
+        "total_capacity": 700,
+        "enrollment_capacity_ratio": 1.40,
+        "distance_to_nearest_alt_school_km": 7.5
+      },
+      "Roads": {
+        "target_facility": "MG Road Corridor (Ward 5)",
+        "accident_count_12m": 12,
+        "traffic_volume_index": 8.0,
+        "connects_wards_count": 6
+      },
+      "Other": {
+        "target_facility": "Silicon Vocational Training Center",
+        "youth_unemployment_rate_pct": 19.5,
+        "nearest_vocational_centre_distance_km": 8.0,
+        "local_industry_demand_index": 9.5
+      }
+    },
+    "default": {
+      "Education": {
+        "target_facility": "Constituency Model School Upgrade",
+        "current_enrollment": 1000,
+        "total_capacity": 800,
+        "enrollment_capacity_ratio": 1.25,
+        "distance_to_nearest_alt_school_km": 5.0
+      },
+      "Roads": {
+        "target_facility": "Main Link Highway Repairs",
+        "accident_count_12m": 10,
+        "traffic_volume_index": 6.5,
+        "connects_wards_count": 4
+      },
+      "Other": {
+        "target_facility": "District Youth Skill Hub",
+        "youth_unemployment_rate_pct": 20.0,
+        "nearest_vocational_centre_distance_km": 8.0,
+        "local_industry_demand_index": 7.0
+      }
+    }
+  }
+}

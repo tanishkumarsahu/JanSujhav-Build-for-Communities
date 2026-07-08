@@ -6,8 +6,9 @@ import WhatsAppSimulation from './components/WhatsAppSimulation.jsx';
 import MPDashboard from './components/MPDashboard.jsx';
 import NewsFeed from './components/NewsFeed.jsx';
 import useLocation from './hooks/useLocation.js';
-import { post, put, setToken, clearToken, getToken } from './utils/api.js';
-import { MapPin, Mic, BarChart2, Newspaper, Send, LayoutDashboard, Loader, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { get, post, put, setToken, clearToken, getToken } from './utils/api.js';
+import { MapPin, Mic, BarChart2, Newspaper, Send, LayoutDashboard, Loader, AlertCircle, Eye, EyeOff, User, Lock, Globe, CheckCircle } from 'lucide-react';
+import ALL_CONSTITUENCIES from './utils/constituencies.json';
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
@@ -230,9 +231,10 @@ function AuthForm({ mode, onSuccess, onSwitch }) {
             try {
               setLoading(true);
               setError('');
-              const data = await post('/api/auth/google', { idToken: response.credential }, false);
-              if (data.token) setToken(data.token);
-              onSuccess(data.user || data, data.token);
+              const resObj = await post('/api/auth/google', { idToken: response.credential }, false);
+              const payload = resObj?.data || {};
+              if (payload.token) setToken(payload.token);
+              onSuccess(payload.user || payload, payload.token);
             } catch (err) {
               setError(err.message || 'Google Sign-In failed.');
             } finally {
@@ -279,9 +281,10 @@ function AuthForm({ mode, onSuccess, onSwitch }) {
       const body = isLogin
         ? { email: form.email, password: form.password }
         : { name: form.name, email: form.email, password: form.password, role: form.role };
-      const data = await post(endpoint, body, false);
-      if (data.token) setToken(data.token);
-      onSuccess(data.user || data, data.token);
+      const resObj = await post(endpoint, body, false);
+      const payload = resObj?.data || {};
+      if (payload.token) setToken(payload.token);
+      onSuccess(payload.user || payload, payload.token);
     } catch (err) {
       setError(err.message || 'Authentication failed.');
     } finally {
@@ -468,28 +471,436 @@ function AuthForm({ mode, onSuccess, onSwitch }) {
 }
 
 // ─── Settings Page ────────────────────────────────────────────────────────────
-function SettingsPage({ user, onLogout }) {
+function SettingsPage({ user, onLogout, onUpdateUser }) {
+  const [name, setName] = useState(user?.name || '');
+  const [constituency, setConstituency] = useState(user?.constituency || '');
+  const [searchQuery, setSearchQuery] = useState(user?.constituency || '');
+  const [isConstDropdownOpen, setIsConstDropdownOpen] = useState(false);
+  const [voiceLang, setVoiceLang] = useState(() => localStorage.getItem('pp_language') || 'en-IN');
+  
+  // Password state
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+
+  // Status states
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileSuccess, setProfileSuccess] = useState(false);
+  const [profileError, setProfileError] = useState('');
+
+  const [constLoading, setConstLoading] = useState(false);
+  const [constSuccess, setConstSuccess] = useState(false);
+  const [constError, setConstError] = useState('');
+
+  const [passLoading, setPassLoading] = useState(false);
+  const [passSuccess, setPassSuccess] = useState(false);
+  const [passError, setPassError] = useState('');
+
+  const [langSuccess, setLangSuccess] = useState(false);
+
+  useEffect(() => {
+    // Fetch latest profile from DB on mount to ensure fresh name/details
+    get('/api/auth/me')
+      .then((res) => {
+        if (res.success && res.data?.user) {
+          const freshUser = res.data.user;
+          onUpdateUser(freshUser);
+          setName(freshUser.name || '');
+          setConstituency(freshUser.constituency || '');
+          setSearchQuery(freshUser.constituency || '');
+        }
+      })
+      .catch((err) => console.error('Failed to fetch profile from DB:', err.message));
+  }, [onUpdateUser]);
+
+  useEffect(() => {
+    if (user) {
+      setName(user.name || '');
+      setConstituency(user.constituency || '');
+      setSearchQuery(user.constituency || '');
+    }
+  }, [user]);
+
+  const languages = [
+    { code: 'en-IN', label: 'English' },
+    { code: 'hi-IN', label: 'हिन्दी (Hindi)' },
+    { code: 'ta-IN', label: 'தமிழ் (Tamil)' },
+    { code: 'te-IN', label: 'తెలుగు (Telugu)' },
+    { code: 'kn-IN', label: 'ಕನ್ನಡ (Kannada)' },
+    { code: 'bn-IN', label: 'বাংলা (Bengali)' },
+    { code: 'mr-IN', label: 'मराठी (Marathi)' },
+    { code: 'gu-IN', label: 'ગુજરાતી (Gujarati)' },
+    { code: 'pa-IN', label: 'ਪੰਜਾਬੀ (Punjabi)' },
+    { code: 'ml-IN', label: 'മലയാളം (Malayalam)' },
+    { code: 'or-IN', label: 'ଓଡ଼ିଆ (Oriya)' },
+    { code: 'ur-IN', label: 'اردو (Urdu)' }
+  ];
+
+  const filteredConstituencies = ALL_CONSTITUENCIES.filter((c) =>
+    c.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const handleSaveProfile = async (e) => {
+    e.preventDefault();
+    if (!name.trim()) return;
+    setProfileLoading(true);
+    setProfileError('');
+    setProfileSuccess(false);
+    try {
+      const res = await put('/api/auth/me/profile', { name });
+      if (res.success && res.data?.user) {
+        onUpdateUser(res.data.user);
+        setProfileSuccess(true);
+        setTimeout(() => setProfileSuccess(false), 3000);
+      } else {
+        setProfileError(res.error || 'Failed to update name');
+      }
+    } catch (err) {
+      setProfileError(err.message || 'Server error occurred');
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
+  const handleSaveConstituency = async (e) => {
+    e.preventDefault();
+    if (!constituency) return;
+    setConstLoading(true);
+    setConstError('');
+    setConstSuccess(false);
+    try {
+      const res = await put('/api/auth/me/constituency', { constituency });
+      if (res.success && res.data?.user) {
+        onUpdateUser(res.data.user);
+        setConstSuccess(true);
+        setTimeout(() => setConstSuccess(false), 3000);
+      } else {
+        setConstError(res.error || 'Failed to update constituency');
+      }
+    } catch (err) {
+      setConstError(err.message || 'Server error occurred');
+    } finally {
+      setConstLoading(false);
+    }
+  };
+
+  const handleSavePassword = async (e) => {
+    e.preventDefault();
+    if (newPassword !== confirmPassword) {
+      setPassError('New passwords do not match');
+      return;
+    }
+    setPassLoading(true);
+    setPassError('');
+    setPassSuccess(false);
+    try {
+      const res = await put('/api/auth/me/password', { currentPassword, newPassword });
+      if (res.success) {
+        setPassSuccess(true);
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+        setTimeout(() => setPassSuccess(false), 3000);
+      } else {
+        setPassError(res.error || 'Failed to update password');
+      }
+    } catch (err) {
+      setPassError(err.message || 'Server error occurred');
+    } finally {
+      setPassLoading(false);
+    }
+  };
+
+  const handleSaveLanguage = (e) => {
+    e.preventDefault();
+    localStorage.setItem('pp_language', voiceLang);
+    setLangSuccess(true);
+    setTimeout(() => setLangSuccess(false), 2000);
+  };
+
+  const cardStyle = {
+    backgroundColor: '#FFFFFF',
+    border: '1px solid #E2E8F0',
+    borderRadius: '10px',
+    padding: '20px',
+    marginBottom: '20px'
+  };
+
+  const inputStyle = {
+    width: '100%',
+    padding: '9px 12px',
+    border: '1.5px solid #E2E8F0',
+    borderRadius: '7px',
+    fontSize: '13px',
+    fontFamily: 'inherit',
+    outline: 'none',
+    backgroundColor: '#FFFFFF',
+    transition: 'border-color 0.15s ease'
+  };
+
+  const btnStyle = (loading) => ({
+    padding: '8px 16px',
+    border: 'none',
+    borderRadius: '7px',
+    background: loading ? '#93C5FD' : '#2563EB',
+    color: '#FFFFFF',
+    fontSize: '13px',
+    fontWeight: 600,
+    cursor: loading ? 'not-allowed' : 'pointer',
+    fontFamily: 'inherit',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    marginTop: '10px'
+  });
+
   return (
     <div style={{ maxWidth: '600px', margin: '40px auto', padding: '0 20px' }}>
-      <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#0F172A', marginBottom: '20px' }}>Settings</h1>
-      <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '20px', marginBottom: '16px' }}>
-        <h3 style={{ margin: '0 0 12px', fontSize: '14px', fontWeight: 600, color: '#0F172A' }}>Account</h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <div style={{ fontSize: '13px', color: '#64748B' }}>Name: <span style={{ color: '#0F172A', fontWeight: 500 }}>{user?.name || '—'}</span></div>
-          <div style={{ fontSize: '13px', color: '#64748B' }}>Email: <span style={{ color: '#0F172A', fontWeight: 500 }}>{user?.email || '—'}</span></div>
-          <div style={{ fontSize: '13px', color: '#64748B' }}>Role: <span style={{ color: '#0F172A', fontWeight: 500, textTransform: 'capitalize' }}>{user?.role || '—'}</span></div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '24px' }}>
+        <User size={20} color="#2563EB" />
+        <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#0F172A', margin: 0 }}>Account Settings</h1>
+      </div>
+
+      {/* Profile settings */}
+      <div style={cardStyle}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+          <User size={16} color="#64748B" />
+          <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#0F172A' }}>Profile Details</h3>
+        </div>
+        <form onSubmit={handleSaveProfile} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '12px', color: '#64748B', fontWeight: 500, marginBottom: '6px' }}>Name</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              style={inputStyle}
+              onFocus={(e) => e.target.style.borderColor = '#2563EB'}
+              onBlur={(e) => e.target.style.borderColor = '#E2E8F0'}
+            />
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: '12px', color: '#64748B', fontWeight: 500, marginBottom: '6px' }}>Email (Read-only)</label>
+            <input type="text" value={user?.email || ''} style={{ ...inputStyle, backgroundColor: '#F8F9FA', color: '#64748B', cursor: 'not-allowed' }} disabled />
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: '12px', color: '#64748B', fontWeight: 500, marginBottom: '6px' }}>Role</label>
+            <input type="text" value={user?.role?.toUpperCase() || ''} style={{ ...inputStyle, backgroundColor: '#F8F9FA', color: '#64748B', cursor: 'not-allowed' }} disabled />
+          </div>
+          {profileSuccess && (
+            <div style={{ fontSize: '12px', color: '#16A34A', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <CheckCircle size={14} /> Name updated successfully!
+            </div>
+          )}
+          {profileError && <div style={{ fontSize: '12px', color: '#DC2626' }}>{profileError}</div>}
+          <button type="submit" disabled={profileLoading} style={btnStyle(profileLoading)}>
+            {profileLoading ? <Loader size={14} style={{ animation: 'spin 1s linear infinite' }} /> : 'Save Profile'}
+          </button>
+        </form>
+      </div>
+
+      {/* Constituency setting */}
+      <div style={cardStyle}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+          <MapPin size={16} color="#64748B" />
+          <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#0F172A' }}>Constituency Selection</h3>
+        </div>
+        <form onSubmit={handleSaveConstituency} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div style={{ position: 'relative' }}>
+            <label style={{ display: 'block', fontSize: '12px', color: '#64748B', fontWeight: 500, marginBottom: '6px' }}>Primary Constituency</label>
+            <input
+              type="text"
+              placeholder="Search constituency..."
+              value={searchQuery}
+              onChange={(e) => {
+                const val = e.target.value;
+                setSearchQuery(val);
+                setIsConstDropdownOpen(true);
+                const match = ALL_CONSTITUENCIES.find(c => c.toLowerCase() === val.toLowerCase().trim());
+                if (match) {
+                  setConstituency(match);
+                }
+              }}
+              onFocus={() => setIsConstDropdownOpen(true)}
+              onBlur={() => {
+                setTimeout(() => {
+                  setIsConstDropdownOpen(false);
+                  const match = ALL_CONSTITUENCIES.find(c => c.toLowerCase() === searchQuery.toLowerCase().trim());
+                  if (match) {
+                    setSearchQuery(match);
+                    setConstituency(match);
+                  } else {
+                    setSearchQuery(constituency || '');
+                  }
+                }, 250);
+              }}
+              style={inputStyle}
+            />
+            {isConstDropdownOpen && (
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                right: 0,
+                maxHeight: '180px',
+                overflowY: 'auto',
+                backgroundColor: '#FFFFFF',
+                border: '1.5px solid #CBD5E1',
+                borderRadius: '8px',
+                zIndex: 100,
+                marginTop: '4px',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)'
+              }}>
+                {filteredConstituencies.slice(0, 50).length === 0 ? (
+                  <div style={{ padding: '8px 12px', color: '#64748B', fontSize: '13px' }}>No matches found</div>
+                ) : (
+                  filteredConstituencies.slice(0, 50).map((c) => (
+                    <div
+                      key={c}
+                      onClick={() => {
+                        setSearchQuery(c);
+                        setConstituency(c);
+                        setIsConstDropdownOpen(false);
+                      }}
+                      style={{
+                        padding: '8px 12px',
+                        cursor: 'pointer',
+                        fontSize: '13px',
+                        color: constituency === c ? '#2563EB' : '#475569',
+                        backgroundColor: constituency === c ? '#EFF6FF' : '#FFFFFF',
+                        fontWeight: constituency === c ? 600 : 400
+                      }}
+                    >
+                      {c}
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+          {constSuccess && (
+            <div style={{ fontSize: '12px', color: '#16A34A', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <CheckCircle size={14} /> Constituency updated successfully!
+            </div>
+          )}
+          {constError && <div style={{ fontSize: '12px', color: '#DC2626' }}>{constError}</div>}
+          <button type="submit" disabled={constLoading} style={btnStyle(constLoading)}>
+            {constLoading ? <Loader size={14} style={{ animation: 'spin 1s linear infinite' }} /> : 'Save Constituency'}
+          </button>
+        </form>
+      </div>
+
+      {/* Voice language settings */}
+      <div style={cardStyle}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+          <Globe size={16} color="#64748B" />
+          <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#0F172A' }}>Voice & Language Preference</h3>
+        </div>
+        <form onSubmit={handleSaveLanguage} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '12px', color: '#64748B', fontWeight: 500, marginBottom: '6px' }}>Default Voice Input Language</label>
+            <select
+              value={voiceLang}
+              onChange={(e) => setVoiceLang(e.target.value)}
+              style={inputStyle}
+            >
+              {languages.map((lang) => (
+                <option key={lang.code} value={lang.code}>{lang.label}</option>
+              ))}
+            </select>
+            <p style={{ margin: '6px 0 0', fontSize: '12px', color: '#64748B' }}>
+              This language will be pre-selected when submitting reports using voice dictation.
+            </p>
+          </div>
+          {langSuccess && (
+            <div style={{ fontSize: '12px', color: '#16A34A', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <CheckCircle size={14} /> Voice language preference saved!
+            </div>
+          )}
+          <button type="submit" style={btnStyle(false)}>Save Preference</button>
+        </form>
+      </div>
+
+      {/* Password settings */}
+      {user?.google_id ? null : (
+        <div style={cardStyle}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+            <Lock size={16} color="#64748B" />
+            <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#0F172A' }}>Change Password</h3>
+          </div>
+          <form onSubmit={handleSavePassword} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ position: 'relative' }}>
+              <label style={{ display: 'block', fontSize: '12px', color: '#64748B', fontWeight: 500, marginBottom: '6px' }}>Current Password</label>
+              <input
+                type={showCurrent ? 'text' : 'password'}
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                style={inputStyle}
+              />
+              <button
+                type="button"
+                onClick={() => setShowCurrent(!showCurrent)}
+                style={{ position: 'absolute', right: '10px', top: '28px', border: 'none', background: 'none', cursor: 'pointer', padding: 0 }}
+              >
+                {showCurrent ? <EyeOff size={16} color="#64748B" /> : <Eye size={16} color="#64748B" />}
+              </button>
+            </div>
+            <div style={{ position: 'relative' }}>
+              <label style={{ display: 'block', fontSize: '12px', color: '#64748B', fontWeight: 500, marginBottom: '6px' }}>New Password</label>
+              <input
+                type={showNew ? 'text' : 'password'}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                style={inputStyle}
+              />
+              <button
+                type="button"
+                onClick={() => setShowNew(!showNew)}
+                style={{ position: 'absolute', right: '10px', top: '28px', border: 'none', background: 'none', cursor: 'pointer', padding: 0 }}
+              >
+                {showNew ? <EyeOff size={16} color="#64748B" /> : <Eye size={16} color="#64748B" />}
+              </button>
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: '12px', color: '#64748B', fontWeight: 500, marginBottom: '6px' }}>Confirm New Password</label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                style={inputStyle}
+              />
+            </div>
+            {passSuccess && (
+              <div style={{ fontSize: '12px', color: '#16A34A', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <CheckCircle size={14} /> Password updated successfully!
+              </div>
+            )}
+            {passError && <div style={{ fontSize: '12px', color: '#DC2626' }}>{passError}</div>}
+            <button type="submit" disabled={passLoading} style={btnStyle(passLoading)}>
+              {passLoading ? <Loader size={14} style={{ animation: 'spin 1s linear infinite' }} /> : 'Change Password'}
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* Sign Out Card */}
+      <div style={{ ...cardStyle, border: '1px solid #FCA5A5', backgroundColor: '#FEF2F2', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h4 style={{ margin: 0, fontSize: '13px', fontWeight: 600, color: '#991B1B' }}>Session Control</h4>
+          <span style={{ fontSize: '12px', color: '#B91C1C' }}>Disconnect your account from this device.</span>
         </div>
         <button
           onClick={onLogout}
           style={{
-            marginTop: '16px',
             padding: '8px 16px',
-            border: '1px solid #FECACA',
+            border: '1px solid #DC2626',
             borderRadius: '7px',
-            background: '#FEF2F2',
-            color: '#DC2626',
+            background: '#DC2626',
+            color: '#FFFFFF',
             fontSize: '13px',
-            fontWeight: 500,
+            fontWeight: 600,
             cursor: 'pointer',
             fontFamily: 'inherit',
           }}
@@ -505,13 +916,42 @@ function SettingsPage({ user, onLogout }) {
 // ─── App (root) ───────────────────────────────────────────────────────────────
 function AppContent() {
   const [user, setUser] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('pp_user')); } catch { return null; }
+    try {
+      const stored = localStorage.getItem('pp_user');
+      if (!stored) return null;
+      const parsed = JSON.parse(stored);
+      if (parsed && parsed.success && parsed.data?.user) {
+        return parsed.data.user;
+      }
+      return parsed;
+    } catch {
+      return null;
+    }
   });
   const [token] = useState(() => getToken());
 
   const navigate = useNavigate();
   const location = useRouteLocation();
   const { constituency, lat, lon, setConstituency } = useLocation();
+
+  // Self-healing migration for old localStorage wrappers
+  useEffect(() => {
+    try {
+      const storedUser = localStorage.getItem('pp_user');
+      if (storedUser) {
+        const parsed = JSON.parse(storedUser);
+        if (parsed && parsed.success && parsed.data?.user) {
+          localStorage.setItem('pp_user', JSON.stringify(parsed.data.user));
+          setUser(parsed.data.user);
+          if (parsed.data.token) {
+            setToken(parsed.data.token);
+          }
+        }
+      }
+    } catch (e) {
+      console.error('[Auth] Storage self-healing failed:', e.message);
+    }
+  }, []);
 
   // If user profile has a saved constituency, sync it globally on mount/login
   useEffect(() => {
@@ -607,7 +1047,14 @@ function AppContent() {
           <Route path="/news" element={<NewsFeed constituency={constituency} setConstituency={handleConstituencyChange} />} />
           <Route path="/settings" element={
             user ? (
-              <SettingsPage user={user} onLogout={handleLogout} />
+              <SettingsPage 
+                user={user} 
+                onLogout={handleLogout} 
+                onUpdateUser={(updated) => {
+                  setUser(updated);
+                  localStorage.setItem('pp_user', JSON.stringify(updated));
+                }}
+              />
             ) : (
               <Navigate to="/login" replace />
             )

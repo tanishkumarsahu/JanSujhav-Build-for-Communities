@@ -545,6 +545,17 @@ function RecommendationsTab({ constituency }) {
             const isExpanded = expandedId === rid;
             const statusStyle = STATUS_STYLES[r.status] || STATUS_STYLES.Pending;
 
+            // Defensively parse JSON columns if returned as strings
+            const citizenSignal = typeof r.citizen_signal === 'string' ? JSON.parse(r.citizen_signal) : r.citizen_signal;
+            const structuralSignal = typeof r.structural_signal === 'string' ? JSON.parse(r.structural_signal) : r.structural_signal;
+            const scoreBreakdown = typeof r.score_breakdown === 'string' ? JSON.parse(r.score_breakdown) : r.score_breakdown;
+
+            const formattedCost = r.estimated_cost 
+              ? new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(r.estimated_cost)
+              : '—';
+
+            const supportCount = r.supporting_suggestions_count ?? r.support_count ?? 0;
+
             return (
               <div key={rid}>
                 <div
@@ -574,8 +585,8 @@ function RecommendationsTab({ constituency }) {
                       {r.priority_score ?? '—'}
                     </span>
                   </div>
-                  <div style={{ fontSize: '13px', color: '#475569' }}>{r.estimated_cost || '—'}</div>
-                  <div style={{ fontSize: '13px', color: '#475569' }}>{r.support_count ?? '—'}</div>
+                  <div style={{ fontSize: '13px', color: '#475569' }}>{formattedCost}</div>
+                  <div style={{ fontSize: '13px', color: '#475569' }}>{supportCount}</div>
                   <div>
                     <select
                       value={r.status || 'Pending'}
@@ -607,10 +618,133 @@ function RecommendationsTab({ constituency }) {
                   </div>
                 </div>
 
-                {isExpanded && r.rationale && (
-                  <div style={{ padding: '12px 20px 14px 56px', backgroundColor: '#F8F9FA', borderBottom: '1px solid #E2E8F0' }}>
-                    <div style={{ fontSize: '11px', fontWeight: 600, color: '#64748B', textTransform: 'uppercase', marginBottom: '6px' }}>Rationale</div>
-                    <p style={{ margin: 0, fontSize: '13px', color: '#475569', lineHeight: '1.6' }}>{r.rationale}</p>
+                {isExpanded && (
+                  <div style={{ padding: '20px 24px 20px 56px', backgroundColor: '#F8FAFC', borderBottom: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    
+                    {/* Rationale header */}
+                    {r.rationale && (
+                      <div>
+                        <div style={{ fontSize: '11px', fontWeight: 600, color: '#64748B', textTransform: 'uppercase', marginBottom: '4px' }}>Recommendation Rationale</div>
+                        <p style={{ margin: 0, fontSize: '13px', color: '#475569', lineHeight: '1.6' }}>{r.rationale}</p>
+                      </div>
+                    )}
+
+                    {/* Scorecard grid */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                      
+                      {/* Citizen Signal (40% Weight) */}
+                      <div style={{ padding: '16px', backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '8px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                          <span style={{ fontSize: '13px', fontWeight: 700, color: '#0F172A' }}>Civic Urgency Signal</span>
+                          <span style={{ fontSize: '11px', fontWeight: 600, color: '#475569', backgroundColor: '#F1F5F9', padding: '2px 8px', borderRadius: '4px' }}>
+                            Weight: 40%
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                          <span style={{ fontSize: '24px', fontWeight: 800, color: '#2563EB' }}>
+                            {citizenSignal?.score ?? r.priority_score ?? 0}
+                          </span>
+                          <span style={{ fontSize: '12px', color: '#64748B', lineHeight: '1.4' }}>
+                            {citizenSignal?.detail || 'Citizen feedback and urgency statistics.'}
+                          </span>
+                        </div>
+                        
+                        {citizenSignal && (
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 10px', fontSize: '12px', borderTop: '1px dashed #E2E8F0', paddingTop: '10px' }}>
+                            <div><span style={{ color: '#64748B' }}>Citizen Reports:</span> <strong style={{ color: '#0F172A' }}>{citizenSignal.complaint_count ?? supportCount}</strong></div>
+                            <div><span style={{ color: '#64748B' }}>Avg Severity:</span> <strong style={{ color: '#0F172A' }}>{citizenSignal.avg_severity ?? '3.0'}/5.0</strong></div>
+                            <div><span style={{ color: '#64748B' }}>Unique Citizens:</span> <strong style={{ color: '#0F172A' }}>{citizenSignal.unique_submitters ?? 1}</strong></div>
+                            <div><span style={{ color: '#64748B' }}>Outstanding Time:</span> <strong style={{ color: '#0F172A' }}>{citizenSignal.days_ago ?? 30} days</strong></div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Structural Deficit (60% Weight) */}
+                      <div style={{ padding: '16px', backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '8px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                          <span style={{ fontSize: '13px', fontWeight: 700, color: '#0F172A' }}>Structural Gaps Deficit</span>
+                          <span style={{ fontSize: '11px', fontWeight: 600, color: '#475569', backgroundColor: '#F1F5F9', padding: '2px 8px', borderRadius: '4px' }}>
+                            Weight: 60%
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                          <span style={{ fontSize: '24px', fontWeight: 800, color: '#16A34A' }}>
+                            {structuralSignal?.score ?? r.priority_score ?? 0}
+                          </span>
+                          <span style={{ fontSize: '12px', color: '#64748B', lineHeight: '1.4' }}>
+                            {structuralSignal?.detail || 'Constituency gap assessment metrics.'}
+                          </span>
+                        </div>
+                        
+                        {structuralSignal && (
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 10px', fontSize: '12px', borderTop: '1px dashed #E2E8F0', paddingTop: '10px' }}>
+                            <div style={{ gridColumn: 'span 2', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              <span style={{ color: '#64748B' }}>Target Location:</span> <strong style={{ color: '#0F172A' }}>{structuralSignal.target_facility || 'Constituency Gaps'}</strong>
+                            </div>
+                            
+                            {r.category === 'Education' && (
+                              <>
+                                <div><span style={{ color: '#64748B' }}>Enrollment Ratio:</span> <strong style={{ color: '#0F172A' }}>{Math.round((structuralSignal.enrollment_capacity_ratio || 0) * 100)}%</strong></div>
+                                <div><span style={{ color: '#64748B' }}>Distance to Alt:</span> <strong style={{ color: '#0F172A' }}>{structuralSignal.distance_to_nearest_alt_school_km || '—'} km</strong></div>
+                              </>
+                            )}
+                            {r.category === 'Roads' && (
+                              <>
+                                <div><span style={{ color: '#64748B' }}>Accidents (12m):</span> <strong style={{ color: '#0F172A' }}>{structuralSignal.accident_count_12m || 0}</strong></div>
+                                <div><span style={{ color: '#64748B' }}>Traffic Index:</span> <strong style={{ color: '#0F172A' }}>{structuralSignal.traffic_volume_index || '0'}/10</strong></div>
+                                <div><span style={{ color: '#64748B' }}>Linked Wards:</span> <strong style={{ color: '#0F172A' }}>{structuralSignal.connects_wards_count || 1}</strong></div>
+                              </>
+                            )}
+                            {r.category === 'Other' && (
+                              <>
+                                <div><span style={{ color: '#64748B' }}>Unemployment:</span> <strong style={{ color: '#0F172A' }}>{structuralSignal.youth_unemployment_rate_pct || 0}%</strong></div>
+                                <div><span style={{ color: '#64748B' }}>Nearest Hub:</span> <strong style={{ color: '#0F172A' }}>{structuralSignal.nearest_vocational_centre_distance_km || '—'} km</strong></div>
+                                <div><span style={{ color: '#64748B' }}>Industry Demand:</span> <strong style={{ color: '#0F172A' }}>{structuralSignal.local_industry_demand_index || '0'}/10</strong></div>
+                              </>
+                            )}
+                            {!['Education', 'Roads', 'Other'].includes(r.category) && (
+                              <>
+                                <div><span style={{ color: '#64748B' }}>Severity Rating:</span> <strong style={{ color: '#0F172A' }}>{structuralSignal.max_severity || 50}/100</strong></div>
+                                <div><span style={{ color: '#64748B' }}>Local Gaps Count:</span> <strong style={{ color: '#0F172A' }}>{structuralSignal.matching_gaps_count || 0}</strong></div>
+                              </>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                    </div>
+
+                    {/* AI Comparative Note */}
+                    {scoreBreakdown?.comparison_note && (
+                      <div style={{
+                        padding: '12px 16px',
+                        backgroundColor: '#F0F9FF',
+                        border: '1.5px solid #BAE6FD',
+                        borderRadius: '8px',
+                        fontSize: '13px',
+                        color: '#0369A1',
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: '10px',
+                        lineHeight: '1.5',
+                        marginTop: '4px'
+                      }}>
+                        <span style={{ 
+                          fontWeight: 700, 
+                          textTransform: 'uppercase', 
+                          fontSize: '10px', 
+                          backgroundColor: '#E0F2FE', 
+                          padding: '2px 6px', 
+                          borderRadius: '4px', 
+                          display: 'inline-block', 
+                          marginTop: '2px' 
+                        }}>
+                          AI Contrast
+                        </span>
+                        <span style={{ flex: 1 }}>{scoreBreakdown.comparison_note}</span>
+                      </div>
+                    )}
+
                   </div>
                 )}
               </div>

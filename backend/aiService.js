@@ -355,6 +355,33 @@ IMPORTANT: Return ONLY the raw JSON object. No markdown, no fences, no explanati
   }
 }
 
+/**
+ * Use Gemini to contrast two proposals and write a concise sentence explaining the priority difference.
+ * @param {object} proposalA - Higher ranking proposal
+ * @param {object} proposalB - Lower ranking proposal
+ * @returns {Promise<string>} Comparison sentence
+ */
+async function generateComparisonNote(proposalA, proposalB) {
+  try {
+    const prompt = `You are a public policy analyst in India. Contrast these two constituency development proposals:
+Proposal A: "${proposalA.title}" (Category: ${proposalA.category}, Score: ${proposalA.priority_score})
+- Citizen Urgency: ${proposalA.citizen_detail}
+- Structural Need: ${proposalA.structural_detail}
+
+Proposal B: "${proposalB.title}" (Category: ${proposalB.category}, Score: ${proposalB.priority_score})
+- Citizen Urgency: ${proposalB.citizen_detail}
+- Structural Need: ${proposalB.structural_detail}
+
+Write one concise, professional sentence contrasting them and explaining why Proposal A is prioritized over Proposal B. Keep it under 25 words.`;
+
+    const text = await generateContentWithFallbacks(prompt);
+    return text.trim();
+  } catch (err) {
+    console.error('[AI] generateComparisonNote error:', err.message);
+    return `Prioritized due to higher combined urgency (${proposalA.priority_score} vs ${proposalB.priority_score}).`;
+  }
+}
+
 module.exports = {
   getActiveModel,
   getGeminiClient,
@@ -363,4 +390,5 @@ module.exports = {
   generateRecommendations,
   filterNewsByQuery,
   enrichNewsArticle,
+  generateComparisonNote,
 };
