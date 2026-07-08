@@ -1,0 +1,52 @@
+@import 'tailwindcss';
+
+:root {
+  --color-bg: #FFFFFF;
+  --color-bg-subtle: #F8F9FA;
+  --color-bg-muted: #F1F5F9;
+  --color-border: #E2E8F0;
+  --color-border-strong: #CBD5E1;
+  --color-text: #0F172A;
+  --color-text-secondary: #475569;
+  --color-text-muted: #64748B;
+  --color-accent: #2563EB;
+  --color-accent-hover: #1D4ED8;
+  --color-green: #16A34A;
+  --color-amber: #D97706;
+  --color-red: #DC2626;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--color-bg-subtle);
+  color: var(--color-text);
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #F1F5F9; }
+::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+
+/* Mic pulse animation */
+@keyframes pulse-ring {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+.mic-pulse::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid #DC2626;
+  animation: pulse-ring 1s ease-out infinite;
+}
+
+/* Transitions */
+.transition-all { transition: all 0.15s ease; }
