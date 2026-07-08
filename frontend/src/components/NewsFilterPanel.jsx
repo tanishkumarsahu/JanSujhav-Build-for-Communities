@@ -1,37 +1,23 @@
 import { useState } from 'react';
-import { Search, Zap, X, Calendar } from 'lucide-react';
+import { Search, Zap, X, Calendar, Landmark, Leaf, Users, BookOpen, TrendingUp, Heart, FileText } from 'lucide-react';
 
 const CATEGORIES = ['All', 'Politics', 'Infrastructure', 'Health', 'Education', 'Economy', 'Environment', 'General'];
 const SENTIMENTS = ['All', 'Positive', 'Negative', 'Neutral'];
 const DATE_PRESETS = ['All', 'Today', '7 Days', '30 Days', 'Custom'];
 
-const SENTIMENT_COLORS = {
-  Positive: { bg: '#F0FDF4', color: '#16A34A', border: '#BBF7D0' },
-  Negative: { bg: '#FEF2F2', color: '#DC2626', border: '#FECACA' },
-  Neutral: { bg: '#F8F9FA', color: '#64748B', border: '#E2E8F0' },
-  All: { bg: '#F8F9FA', color: '#0F172A', border: '#E2E8F0' },
-};
-
-const CATEGORY_COLORS = {
-  All: { bg: '#F8F9FA', color: '#0F172A', border: '#E2E8F0', active: '#0F172A' },
-  Politics: { bg: '#EFF6FF', color: '#2563EB', border: '#BFDBFE' },
-  Infrastructure: { bg: '#FFF7ED', color: '#D97706', border: '#FED7AA' },
-  Health: { bg: '#FFF0F3', color: '#DC2626', border: '#FECACA' },
-  Education: { bg: '#EFF6FF', color: '#2563EB', border: '#BFDBFE' },
-  Economy: { bg: '#F0FDF4', color: '#16A34A', border: '#BBF7D0' },
-  Environment: { bg: '#ECFDF5', color: '#059669', border: '#A7F3D0' },
-  General: { bg: '#F8F9FA', color: '#64748B', border: '#E2E8F0' },
+const CATEGORY_ICONS = {
+  All: FileText,
+  Politics: Landmark,
+  Infrastructure: TrendingUp,
+  Health: Heart,
+  Education: BookOpen,
+  Economy: TrendingUp,
+  Environment: Leaf,
+  General: FileText,
 };
 
 /**
  * NewsFilterPanel — built-in filters + AI smart filter
- *
- * Props: {
- *   filters, onFilterChange,
- *   onAIFilter, onClearAIFilter,
- *   aiFilterLoading, aiFilterActive,
- *   constituency
- * }
  */
 export default function NewsFilterPanel({
   filters = {},
@@ -71,105 +57,98 @@ export default function NewsFilterPanel({
     onClearAIFilter();
   };
 
-  const PillButton = ({ label, active, onClick, colorSet }) => {
-    const cs = colorSet || {};
-    return (
-      <button
-        onClick={onClick}
-        style={{
-          padding: '5px 12px',
-          borderRadius: '20px',
-          border: `1px solid ${active ? (cs.border || '#2563EB') : '#E2E8F0'}`,
-          background: active ? (cs.bg || '#EFF6FF') : '#FFFFFF',
-          color: active ? (cs.color || '#2563EB') : '#475569',
-          fontSize: '13px',
-          fontWeight: active ? 600 : 400,
-          cursor: 'pointer',
-          fontFamily: 'inherit',
-          whiteSpace: 'nowrap',
-          transition: 'all 0.1s ease',
-        }}
-      >
-        {label}
-      </button>
-    );
-  };
-
   return (
-    <div
-      style={{
-        backgroundColor: '#FFFFFF',
-        border: '1px solid #E2E8F0',
-        borderRadius: '10px',
-        padding: '16px',
-        marginBottom: '16px',
-      }}
-    >
+    <div className="bg-white border border-slate-100 rounded-xl p-5 mb-5">
       {/* Category Row */}
-      <div style={{ marginBottom: '12px' }}>
-        <div style={{ fontSize: '11px', fontWeight: 600, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
-          Category
+      <div className="mb-4">
+        <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest mb-3">
+          Filter by Category
         </div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-          {CATEGORIES.map((cat) => (
-            <PillButton
-              key={cat}
-              label={cat}
-              active={filters.category === cat || (!filters.category && cat === 'All')}
-              onClick={() => setFilter('category', cat)}
-              colorSet={CATEGORY_COLORS[cat]}
-            />
-          ))}
+        <div className="flex flex-wrap gap-2">
+          {CATEGORIES.map((cat) => {
+            const isActive = filters.category === cat || (!filters.category && cat === 'All');
+            const IconComp = CATEGORY_ICONS[cat] || FileText;
+            return (
+              <button
+                key={cat}
+                onClick={() => setFilter('category', cat)}
+                className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium cursor-pointer font-[inherit] whitespace-nowrap transition-all duration-200 border
+                  ${isActive
+                    ? 'bg-[#BFDDF0]/25 border-[#8CC0EB] text-slate-800 font-semibold'
+                    : 'bg-white border-slate-100 text-slate-500 hover:border-slate-200 hover:bg-slate-50'
+                  }`}
+              >
+                <IconComp size={13} />
+                {cat}
+              </button>
+            );
+          })}
         </div>
       </div>
 
       {/* Sentiment + Date Row */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', marginBottom: '12px' }}>
+      <div className="flex flex-wrap gap-6 mb-4">
         <div>
-          <div style={{ fontSize: '11px', fontWeight: 600, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
+          <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest mb-3">
             Sentiment
           </div>
-          <div style={{ display: 'flex', gap: '6px' }}>
-            {SENTIMENTS.map((s) => (
-              <PillButton
-                key={s}
-                label={s}
-                active={filters.sentiment === s || (!filters.sentiment && s === 'All')}
-                onClick={() => setFilter('sentiment', s)}
-                colorSet={SENTIMENT_COLORS[s]}
-              />
-            ))}
+          <div className="flex gap-2">
+            {SENTIMENTS.map((s) => {
+              const isActive = filters.sentiment === s || (!filters.sentiment && s === 'All');
+              return (
+                <button
+                  key={s}
+                  onClick={() => setFilter('sentiment', s)}
+                  className={`px-3.5 py-1.5 rounded-full text-sm font-medium cursor-pointer font-[inherit] whitespace-nowrap transition-all duration-200 border
+                    ${isActive
+                      ? 'bg-[#BFDDF0]/25 border-[#8CC0EB] text-slate-800 font-semibold'
+                      : 'bg-white border-slate-100 text-slate-500 hover:border-slate-200'
+                    }`}
+                >
+                  {s}
+                </button>
+              );
+            })}
           </div>
         </div>
 
         <div>
-          <div style={{ fontSize: '11px', fontWeight: 600, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
+          <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest mb-3">
             Date Range
           </div>
-          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-            {DATE_PRESETS.map((d) => (
-              <PillButton
-                key={d}
-                label={d === 'Custom' ? <><Calendar size={12} style={{ display: 'inline', marginRight: '4px' }} />{d}</> : d}
-                active={filters.date === d || (!filters.date && d === 'All')}
-                onClick={() => handleDatePreset(d)}
-              />
-            ))}
+          <div className="flex gap-2 flex-wrap">
+            {DATE_PRESETS.map((d) => {
+              const isActive = filters.date === d || (!filters.date && d === 'All');
+              return (
+                <button
+                  key={d}
+                  onClick={() => handleDatePreset(d)}
+                  className={`inline-flex items-center gap-1 px-3.5 py-1.5 rounded-full text-sm font-medium cursor-pointer font-[inherit] whitespace-nowrap transition-all duration-200 border
+                    ${isActive
+                      ? 'bg-[#BFDDF0]/25 border-[#8CC0EB] text-slate-800 font-semibold'
+                      : 'bg-white border-slate-100 text-slate-500 hover:border-slate-200'
+                    }`}
+                >
+                  {d === 'Custom' && <Calendar size={12} />}
+                  {d}
+                </button>
+              );
+            })}
           </div>
           {showDatePicker && (
-            <div style={{ display: 'flex', gap: '8px', marginTop: '8px', alignItems: 'center' }}>
+            <div className="flex gap-2 mt-2 items-center">
               <input
                 type="date"
                 value={filters.dateFrom || ''}
                 onChange={(e) => setFilter('dateFrom', e.target.value)}
-                style={{ padding: '5px 10px', border: '1px solid #E2E8F0', borderRadius: '6px', fontSize: '13px', fontFamily: 'inherit' }}
+                className="px-3 py-1.5 border border-slate-200 rounded-lg text-sm font-[inherit] text-slate-800 bg-white"
               />
-              <span style={{ color: '#64748B', fontSize: '13px' }}>to</span>
+              <span className="text-slate-400 text-sm">to</span>
               <input
                 type="date"
                 value={filters.dateTo || ''}
                 onChange={(e) => setFilter('dateTo', e.target.value)}
-                style={{ padding: '5px 10px', border: '1px solid #E2E8F0', borderRadius: '6px', fontSize: '13px', fontFamily: 'inherit' }}
+                className="px-3 py-1.5 border border-slate-200 rounded-lg text-sm font-[inherit] text-slate-800 bg-white"
               />
             </div>
           )}
@@ -177,29 +156,18 @@ export default function NewsFilterPanel({
       </div>
 
       {/* Keyword Row */}
-      <div style={{ marginBottom: '16px' }}>
-        <div style={{ fontSize: '11px', fontWeight: 600, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
+      <div>
+        <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest mb-3">
           Keyword Search
         </div>
-        <div style={{ position: 'relative', maxWidth: '360px' }}>
-          <Search size={15} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#64748B' }} />
+        <div className="relative max-w-sm">
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
             placeholder="Search news..."
             value={filters.keyword || ''}
             onChange={(e) => setFilter('keyword', e.target.value)}
-            style={{
-              width: '100%',
-              padding: '8px 12px 8px 32px',
-              border: '1px solid #E2E8F0',
-              borderRadius: '7px',
-              fontSize: '13px',
-              fontFamily: 'inherit',
-              color: '#0F172A',
-              outline: 'none',
-            }}
-            onFocus={(e) => e.target.style.borderColor = '#2563EB'}
-            onBlur={(e) => e.target.style.borderColor = '#E2E8F0'}
+            className="w-full py-2.5 pl-9 pr-3 border border-slate-200 rounded-lg text-sm font-[inherit] text-slate-800 bg-white transition-all duration-200 hover:border-slate-300"
           />
         </div>
       </div>

@@ -35,31 +35,17 @@ function formatTime(date) {
 
 function UserBubble({ msg }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
-      <div style={{ maxWidth: '70%' }}>
+    <div className="flex justify-end mb-2">
+      <div className="max-w-[70%]">
         {msg.image && (
-          <div style={{ marginBottom: '4px', textAlign: 'right' }}>
-            <img
-              src={msg.image}
-              alt="attachment"
-              style={{ maxWidth: '200px', borderRadius: '8px', border: '1px solid #E2E8F0' }}
-            />
+          <div className="mb-1 text-right">
+            <img src={msg.image} alt="attachment" className="max-w-[200px] rounded-lg border border-slate-100" />
           </div>
         )}
-        <div
-          style={{
-            padding: '10px 14px',
-            backgroundColor: '#EFF6FF',
-            border: '1px solid #BFDBFE',
-            borderRadius: '14px 14px 4px 14px',
-            fontSize: '14px',
-            color: '#0F172A',
-            lineHeight: '1.5',
-          }}
-        >
+        <div className="px-4 py-2.5 bg-[#BFDDF0]/25 border border-[#BFDDF0]/40 rounded-2xl rounded-br-sm text-sm text-slate-800 leading-relaxed">
           {msg.text}
         </div>
-        <div style={{ fontSize: '11px', color: '#94A3B8', textAlign: 'right', marginTop: '3px' }}>
+        <div className="text-[11px] text-slate-400 text-right mt-1">
           {formatTime(msg.time)} ✓✓
         </div>
       </div>
@@ -69,54 +55,35 @@ function UserBubble({ msg }) {
 
 function SystemBubble({ msg }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: '8px' }}>
-      <div style={{ maxWidth: '75%' }}>
-        <div
-          style={{
-            padding: '10px 14px',
-            backgroundColor: '#FFFFFF',
-            border: '1px solid #E2E8F0',
-            borderRadius: '14px 14px 14px 4px',
-            fontSize: '14px',
-            color: '#0F172A',
-            lineHeight: '1.5',
-          }}
-        >
+    <div className="flex justify-start mb-2">
+      <div className="max-w-[75%]">
+        <div className="px-4 py-2.5 bg-white border border-slate-100 rounded-2xl rounded-bl-sm text-sm text-slate-800 leading-relaxed shadow-sm">
           {msg.text}
           {msg.analysis && (
-            <div
-              style={{
-                marginTop: '10px',
-                padding: '8px 10px',
-                backgroundColor: '#F8F9FA',
-                borderRadius: '6px',
-                border: '1px solid #E2E8F0',
-              }}
-            >
-              <div style={{ fontSize: '11px', fontWeight: 600, color: '#64748B', textTransform: 'uppercase', marginBottom: '6px' }}>
+            <div className="mt-3 p-3 bg-slate-50 rounded-lg border border-slate-100">
+              <div className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">
                 AI Analysis
               </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+              <div className="flex flex-wrap gap-1.5">
                 {msg.analysis.ai_category && (
-                  <span style={{ fontSize: '12px', padding: '2px 8px', borderRadius: '4px', backgroundColor: '#EFF6FF', color: '#2563EB', border: '1px solid #BFDBFE', fontWeight: 600 }}>
+                  <span className="text-xs px-2.5 py-0.5 rounded-md bg-[#BFDDF0]/25 text-[#3B8BC7] border border-[#BFDDF0] font-semibold">
                     {msg.analysis.ai_category}
                   </span>
                 )}
                 {msg.analysis.sentiment && (
-                  <span style={{
-                    fontSize: '12px', padding: '2px 8px', borderRadius: '4px', fontWeight: 600,
-                    backgroundColor: msg.analysis.sentiment === 'Negative' ? '#FEF2F2' : msg.analysis.sentiment === 'Positive' ? '#F0FDF4' : '#F8F9FA',
-                    color: msg.analysis.sentiment === 'Negative' ? '#DC2626' : msg.analysis.sentiment === 'Positive' ? '#16A34A' : '#64748B',
-                    border: `1px solid ${msg.analysis.sentiment === 'Negative' ? '#FECACA' : msg.analysis.sentiment === 'Positive' ? '#BBF7D0' : '#E2E8F0'}`,
-                  }}>
+                  <span className={`text-xs px-2.5 py-0.5 rounded-md font-medium border
+                    ${msg.analysis.sentiment === 'Negative' ? 'bg-red-50 text-red-600 border-red-200' :
+                      msg.analysis.sentiment === 'Positive' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' :
+                      'bg-slate-50 text-slate-500 border-slate-200'}`}
+                  >
                     {msg.analysis.sentiment}
                   </span>
                 )}
               </div>
               {msg.analysis.ai_tags?.length > 0 && (
-                <div style={{ marginTop: '6px', display: 'flex', flexWrap: 'wrap', gap: '3px' }}>
+                <div className="mt-2 flex flex-wrap gap-1">
                   {msg.analysis.ai_tags.map((tag, i) => (
-                    <span key={i} style={{ fontSize: '11px', padding: '1px 6px', borderRadius: '3px', backgroundColor: '#F1F5F9', color: '#475569', border: '1px solid #E2E8F0' }}>
+                    <span key={i} className="text-[11px] px-2 py-0.5 rounded bg-slate-100 text-slate-500 border border-slate-100">
                       {tag}
                     </span>
                   ))}
@@ -125,7 +92,7 @@ function SystemBubble({ msg }) {
             </div>
           )}
         </div>
-        <div style={{ fontSize: '11px', color: '#94A3B8', marginTop: '3px' }}>
+        <div className="text-[11px] text-slate-400 mt-1">
           MP Helpline · {formatTime(msg.time)}
         </div>
       </div>
@@ -237,149 +204,60 @@ export default function WhatsAppSimulation({ constituency }) {
   };
 
   return (
-    <div style={{ maxWidth: '900px', margin: '24px auto', padding: '0 16px' }}>
-      <div
-        style={{
-          backgroundColor: '#FFFFFF',
-          border: '1px solid #E2E8F0',
-          borderRadius: '12px',
-          overflow: 'hidden',
-          display: 'flex',
-          height: '600px',
-        }}
-      >
+    <div className="max-w-4xl mx-auto p-4 md:p-6">
+      <div className="bg-white border border-slate-100 rounded-2xl overflow-hidden flex h-[600px] shadow-sm">
         {/* Left panel — contact list */}
-        <div
-          style={{
-            width: '260px',
-            borderRight: '1px solid #E2E8F0',
-            display: 'flex',
-            flexDirection: 'column',
-            flexShrink: 0,
-          }}
-        >
-          <div
-            style={{
-              padding: '16px',
-              borderBottom: '1px solid #E2E8F0',
-              backgroundColor: '#F8F9FA',
-            }}
-          >
-            <div style={{ fontSize: '14px', fontWeight: 700, color: '#0F172A' }}>Messages</div>
-            <div style={{ fontSize: '12px', color: '#64748B', marginTop: '2px' }}>Constituency Helpline</div>
+        <div className="w-[260px] border-r border-slate-100 flex flex-col shrink-0 hidden md:flex">
+          <div className="p-4 border-b border-slate-100 bg-slate-50/50">
+            <div className="text-sm font-bold text-slate-800">Messages</div>
+            <div className="text-xs text-slate-400 mt-0.5">Constituency Helpline</div>
           </div>
 
           {/* Contact entry */}
-          <div
-            style={{
-              padding: '14px 16px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              backgroundColor: '#EFF6FF',
-              borderBottom: '1px solid #E2E8F0',
-              cursor: 'pointer',
-            }}
-          >
-            <div
-              style={{
-                width: '42px',
-                height: '42px',
-                borderRadius: '50%',
-                backgroundColor: '#2563EB',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-                fontSize: '18px',
-              }}
-            >
+          <div className="p-4 flex items-center gap-3 bg-[#BFDDF0]/10 border-b border-slate-100 cursor-pointer">
+            <div className="w-11 h-11 rounded-full bg-[#8CC0EB] flex items-center justify-center shrink-0 text-lg">
               🏛️
             </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: '14px', fontWeight: 600, color: '#0F172A' }}>MP Helpline</div>
-              <div
-                style={{
-                  fontSize: '12px',
-                  color: '#64748B',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}
-              >
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-semibold text-slate-800">MP Helpline</div>
+              <div className="text-xs text-slate-400 overflow-hidden text-ellipsis whitespace-nowrap">
                 {constituency || 'Your constituency'}
               </div>
             </div>
-            <div style={{ fontSize: '11px', color: '#94A3B8', flexShrink: 0 }}>now</div>
+            <div className="text-[11px] text-slate-400 shrink-0">now</div>
           </div>
 
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{ textAlign: 'center', color: '#94A3B8', fontSize: '12px', padding: '16px' }}>
-              <div style={{ fontSize: '24px', marginBottom: '8px' }}>💬</div>
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center text-slate-400 text-xs p-4">
+              <div className="text-2xl mb-2">💬</div>
               Submit concerns via the chat
             </div>
           </div>
         </div>
 
         {/* Right panel — chat */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+        <div className="flex-1 flex flex-col min-w-0">
           {/* Chat header */}
-          <div
-            style={{
-              padding: '12px 16px',
-              borderBottom: '1px solid #E2E8F0',
-              backgroundColor: '#F8F9FA',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-            }}
-          >
-            <div
-              style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: '50%',
-                backgroundColor: '#2563EB',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '16px',
-              }}
-            >
+          <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/50 flex items-center gap-3">
+            <div className="w-9 h-9 rounded-full bg-[#8CC0EB] flex items-center justify-center text-base">
               🏛️
             </div>
             <div>
-              <div style={{ fontSize: '14px', fontWeight: 600, color: '#0F172A' }}>MP Helpline</div>
-              <div style={{ fontSize: '12px', color: '#16A34A' }}>● Online</div>
+              <div className="text-sm font-semibold text-slate-800">MP Helpline</div>
+              <div className="text-xs text-emerald-500">● Online</div>
             </div>
           </div>
 
           {/* Messages area */}
-          <div
-            style={{
-              flex: 1,
-              overflowY: 'auto',
-              padding: '16px',
-              backgroundColor: '#F8F9FA',
-            }}
-          >
+          <div className="flex-1 overflow-y-auto p-4 bg-slate-50/30">
             {messages.map((msg) =>
               msg.type === 'user'
                 ? <UserBubble key={msg.id} msg={msg} />
                 : <SystemBubble key={msg.id} msg={msg} />
             )}
             {sending && (
-              <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: '8px' }}>
-                <div
-                  style={{
-                    padding: '10px 14px',
-                    backgroundColor: '#FFFFFF',
-                    border: '1px solid #E2E8F0',
-                    borderRadius: '14px 14px 14px 4px',
-                    fontSize: '13px',
-                    color: '#64748B',
-                  }}
-                >
+              <div className="flex justify-start mb-2">
+                <div className="px-4 py-2.5 bg-white border border-slate-100 rounded-2xl rounded-bl-sm text-sm text-slate-400">
                   Analyzing your message...
                 </div>
               </div>
@@ -389,19 +267,19 @@ export default function WhatsAppSimulation({ constituency }) {
 
           {/* Voice interim */}
           {interimText && (
-            <div style={{ padding: '6px 16px', backgroundColor: '#FFFFFF', borderTop: '1px solid #F1F5F9', fontSize: '12px', color: '#64748B', fontStyle: 'italic' }}>
+            <div className="px-4 py-1.5 bg-white border-t border-slate-50 text-xs text-slate-400 italic">
               🎤 {interimText}...
             </div>
           )}
 
           {/* Photo preview */}
           {photoPreview && (
-            <div style={{ padding: '8px 16px', backgroundColor: '#FFFFFF', borderTop: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <img src={photoPreview} alt="preview" style={{ height: '48px', borderRadius: '6px', border: '1px solid #E2E8F0' }} />
-              <span style={{ fontSize: '12px', color: '#64748B' }}>{photoFile?.name}</span>
+            <div className="px-4 py-2 bg-white border-t border-slate-100 flex items-center gap-2">
+              <img src={photoPreview} alt="preview" className="h-12 rounded-lg border border-slate-100" />
+              <span className="text-xs text-slate-400">{photoFile?.name}</span>
               <button
                 onClick={() => { setPhotoFile(null); setPhotoPreview(null); }}
-                style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: '#64748B' }}
+                className="ml-auto bg-transparent border-none cursor-pointer text-slate-400 hover:text-slate-600 transition-colors"
               >
                 <X size={16} />
               </button>
@@ -410,41 +288,20 @@ export default function WhatsAppSimulation({ constituency }) {
 
           {/* Voice error */}
           {voiceError && (
-            <div style={{ padding: '6px 16px', backgroundColor: '#FEF2F2', borderTop: '1px solid #FECACA', fontSize: '12px', color: '#DC2626', display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <div className="px-4 py-1.5 bg-red-50 border-t border-red-200 text-xs text-red-500 flex items-center gap-1.5">
               <AlertCircle size={13} /> {voiceError}
             </div>
           )}
 
           {/* Compose bar */}
-          <div
-            style={{
-              padding: '10px 12px',
-              borderTop: '1px solid #E2E8F0',
-              backgroundColor: '#FFFFFF',
-              display: 'flex',
-              alignItems: 'flex-end',
-              gap: '8px',
-            }}
-          >
+          <div className="px-3 py-3 border-t border-slate-100 bg-white flex items-end gap-2">
             {/* Language selector */}
             <select
               value={voiceLang}
               onChange={(e) => setVoiceLang(e.target.value)}
               disabled={isListening}
               title="Voice input language"
-              style={{
-                padding: '6px 4px',
-                border: '1px solid #E2E8F0',
-                borderRadius: '6px',
-                fontSize: '11px',
-                fontFamily: 'inherit',
-                backgroundColor: '#F8F9FA',
-                color: '#0F172A',
-                cursor: 'pointer',
-                outline: 'none',
-                width: '48px',
-                flexShrink: 0,
-              }}
+              className="px-1.5 py-1.5 border border-slate-200 rounded-lg text-[11px] font-[inherit] bg-slate-50 text-slate-800 cursor-pointer w-12 shrink-0"
             >
               {LANGUAGES.map((lang) => (
                 <option key={lang.code} value={lang.code} title={lang.code}>
@@ -460,22 +317,7 @@ export default function WhatsAppSimulation({ constituency }) {
               onChange={(e) => setInputText(e.target.value)}
               onKeyDown={handleKeyDown}
               rows={1}
-              style={{
-                flex: 1,
-                padding: '8px 12px',
-                border: '1px solid #E2E8F0',
-                borderRadius: '8px',
-                fontSize: '14px',
-                fontFamily: 'inherit',
-                color: '#0F172A',
-                resize: 'none',
-                outline: 'none',
-                lineHeight: '1.4',
-                maxHeight: '80px',
-                overflowY: 'auto',
-              }}
-              onFocus={(e) => e.target.style.borderColor = '#2563EB'}
-              onBlur={(e) => e.target.style.borderColor = '#E2E8F0'}
+              className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm font-[inherit] text-slate-800 resize-none leading-snug max-h-20 overflow-y-auto transition-all duration-200 hover:border-slate-300"
             />
 
             {/* Mic button */}
@@ -483,23 +325,14 @@ export default function WhatsAppSimulation({ constituency }) {
               <button
                 type="button"
                 onClick={isListening ? stop : start}
-                style={{
-                  position: 'relative',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: '38px',
-                  height: '38px',
-                  borderRadius: '50%',
-                  border: `1px solid ${isListening ? '#DC2626' : '#E2E8F0'}`,
-                  background: isListening ? '#FEF2F2' : '#F8F9FA',
-                  cursor: 'pointer',
-                  flexShrink: 0,
-                }}
-                className={isListening ? 'mic-pulse' : ''}
+                className={`relative flex items-center justify-center w-10 h-10 rounded-full border shrink-0 cursor-pointer transition-all duration-200
+                  ${isListening
+                    ? 'border-red-400 bg-red-50'
+                    : 'border-slate-200 bg-slate-50 hover:border-slate-300 hover:bg-slate-100'
+                  }`}
                 title={isListening ? 'Stop recording' : 'Voice message'}
               >
-                {isListening ? <MicOff size={16} color="#DC2626" /> : <Mic size={16} color="#475569" />}
+                {isListening ? <MicOff size={16} className="text-red-500" /> : <Mic size={16} className="text-slate-500" />}
               </button>
             )}
 
@@ -507,51 +340,33 @@ export default function WhatsAppSimulation({ constituency }) {
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '38px',
-                height: '38px',
-                borderRadius: '50%',
-                border: '1px solid #E2E8F0',
-                background: '#F8F9FA',
-                cursor: 'pointer',
-                flexShrink: 0,
-              }}
+              className="flex items-center justify-center w-10 h-10 rounded-full border border-slate-200 bg-slate-50 cursor-pointer shrink-0 hover:border-slate-300 hover:bg-slate-100 transition-all duration-200"
               title="Attach photo"
             >
-              <Camera size={16} color="#475569" />
+              <Camera size={16} className="text-slate-500" />
             </button>
-            <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoChange} style={{ display: 'none' }} />
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
 
             {/* Send button */}
             <button
               type="button"
               onClick={handleSend}
               disabled={sending || (!inputText.trim() && !photoFile)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '38px',
-                height: '38px',
-                borderRadius: '50%',
-                border: 'none',
-                background: (sending || (!inputText.trim() && !photoFile)) ? '#E2E8F0' : '#2563EB',
-                cursor: (sending || (!inputText.trim() && !photoFile)) ? 'not-allowed' : 'pointer',
-                flexShrink: 0,
-              }}
+              className={`flex items-center justify-center w-10 h-10 rounded-full border-none shrink-0 transition-all duration-200
+                ${(sending || (!inputText.trim() && !photoFile))
+                  ? 'bg-slate-100 cursor-not-allowed'
+                  : 'bg-[#8CC0EB] cursor-pointer hover:bg-[#5BA3D9] shadow-sm'
+                }`}
               title="Send"
             >
-              <Send size={16} color={sending || (!inputText.trim() && !photoFile) ? '#94A3B8' : '#FFFFFF'} />
+              <Send size={16} className={(sending || (!inputText.trim() && !photoFile)) ? 'text-slate-400' : 'text-white'} />
             </button>
           </div>
         </div>
       </div>
 
       {/* Demo note */}
-      <div style={{ marginTop: '12px', padding: '10px 14px', backgroundColor: '#F8F9FA', border: '1px solid #E2E8F0', borderRadius: '8px', fontSize: '12px', color: '#64748B' }}>
+      <div className="mt-3 px-4 py-3 bg-[#FFF9D2]/40 border border-[#FFEBCC]/60 rounded-xl text-xs text-slate-500">
         <strong>Demo Mode:</strong> This simulates how citizens can submit suggestions via messaging apps. Messages are submitted to the same AI analysis pipeline.
       </div>
     </div>

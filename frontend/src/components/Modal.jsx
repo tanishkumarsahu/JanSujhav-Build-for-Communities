@@ -39,68 +39,17 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md' })
     <div
       ref={overlayRef}
       onClick={handleOverlayClick}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 1000,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '16px',
-        backgroundColor: 'rgba(255,255,255,0.8)',
-        backdropFilter: 'blur(4px)',
-        WebkitBackdropFilter: 'blur(4px)',
-        animation: 'fadeIn 0.15s ease',
-      }}
+      className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-white/80 backdrop-blur-sm animate-[fadeIn_0.15s_ease]"
     >
-      <style>{`
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes slideUp { from { transform: translateY(12px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-      `}</style>
       <div
-        style={{
-          backgroundColor: '#FFFFFF',
-          border: '1px solid #E2E8F0',
-          borderRadius: '12px',
-          width: '100%',
-          maxHeight: '90vh',
-          overflowY: 'auto',
-          animation: 'slideUp 0.15s ease',
-        }}
-        className={SIZE_CLASSES[size] || SIZE_CLASSES.md}
+        className={`bg-white border border-slate-100 rounded-2xl w-full max-h-[90vh] overflow-y-auto shadow-lg animate-[slideUp_0.15s_ease] ${SIZE_CLASSES[size] || SIZE_CLASSES.md}`}
       >
         {/* Header */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '16px 20px',
-            borderBottom: '1px solid #E2E8F0',
-            position: 'sticky',
-            top: 0,
-            backgroundColor: '#FFFFFF',
-            zIndex: 1,
-          }}
-        >
-          <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 600, color: '#0F172A' }}>
-            {title}
-          </h2>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 sticky top-0 bg-white z-[1] rounded-t-2xl">
+          <h2 className="m-0 text-base font-semibold text-slate-800">{title}</h2>
           <button
             onClick={onClose}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '32px',
-              height: '32px',
-              border: '1px solid #E2E8F0',
-              borderRadius: '6px',
-              background: 'none',
-              cursor: 'pointer',
-              color: '#475569',
-              flexShrink: 0,
-            }}
+            className="flex items-center justify-center w-8 h-8 border border-slate-100 rounded-lg bg-transparent cursor-pointer text-slate-400 shrink-0 hover:bg-slate-50 hover:text-slate-600 transition-all duration-200"
             aria-label="Close modal"
           >
             <X size={16} />
@@ -108,9 +57,7 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md' })
         </div>
 
         {/* Body */}
-        <div style={{ padding: '20px' }}>
-          {children}
-        </div>
+        <div className="p-5">{children}</div>
       </div>
     </div>
   );

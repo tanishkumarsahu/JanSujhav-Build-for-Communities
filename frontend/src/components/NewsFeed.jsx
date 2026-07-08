@@ -21,20 +21,13 @@ function timeAgoFull(date) {
 
 function SkeletonCard() {
   return (
-    <div
-      style={{
-        backgroundColor: '#FFFFFF',
-        border: '1px solid #E2E8F0',
-        borderRadius: '10px',
-        overflow: 'hidden',
-      }}
-    >
-      <div style={{ height: '120px', backgroundColor: '#F1F5F9' }} />
-      <div style={{ padding: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        <div style={{ height: '20px', backgroundColor: '#F1F5F9', borderRadius: '4px', width: '60%' }} />
-        <div style={{ height: '14px', backgroundColor: '#F1F5F9', borderRadius: '4px' }} />
-        <div style={{ height: '14px', backgroundColor: '#F1F5F9', borderRadius: '4px', width: '80%' }} />
-        <div style={{ height: '14px', backgroundColor: '#F1F5F9', borderRadius: '4px', width: '70%' }} />
+    <div className="bg-white border border-slate-100 rounded-xl overflow-hidden">
+      <div className="h-32 bg-slate-50 animate-pulse" />
+      <div className="p-4 flex flex-col gap-3">
+        <div className="h-5 bg-slate-50 rounded w-3/5 animate-pulse" />
+        <div className="h-3.5 bg-slate-50 rounded animate-pulse" />
+        <div className="h-3.5 bg-slate-50 rounded w-4/5 animate-pulse" />
+        <div className="h-3.5 bg-slate-50 rounded w-3/4 animate-pulse" />
       </div>
     </div>
   );
@@ -75,8 +68,6 @@ export default function NewsFeed({ constituency: propConstituency, setConstituen
     setPage(1);
   }, []);
 
-
-
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   const handlePageChange = (newPage) => {
@@ -86,56 +77,36 @@ export default function NewsFeed({ constituency: propConstituency, setConstituen
   };
 
   return (
-    <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '24px 20px' }}>
+    <div className="max-w-7xl mx-auto px-5 py-6">
       {/* Header */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'flex-start',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: '12px',
-          marginBottom: '16px',
-        }}
-      >
+      <div className="flex items-start justify-between flex-wrap gap-3 mb-5">
         <div>
-          <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#0F172A' }}>
-            {activeConstituency ? `News from ${activeConstituency}` : 'Constituency News'}
+          <h1 className="m-0 text-2xl font-bold text-slate-800 tracking-tight">
+            {activeConstituency ? `Latest Updates` : 'Latest Updates'}
           </h1>
-          <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#64748B' }}>
-            Aggregated local news with AI-powered analysis
+          <p className="m-0 mt-1 text-sm text-slate-500">
+            Stay informed about community priorities, policy changes, and civic initiatives.
           </p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+        <div className="flex items-center gap-3 flex-wrap">
           {lastRefreshedAt && (
-            <span style={{ fontSize: '12px', color: '#94A3B8' }}>
+            <span className="text-xs text-slate-400">
               Last refreshed {timeAgoFull(lastRefreshedAt)}
             </span>
           )}
           <button
             onClick={refresh}
             disabled={loading}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '7px 12px',
-              border: '1px solid #E2E8F0',
-              borderRadius: '7px',
-              background: '#FFFFFF',
-              color: '#475569',
-              fontSize: '13px',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              fontFamily: 'inherit',
-            }}
+            className={`inline-flex items-center gap-1.5 px-3.5 py-2 border border-slate-200 rounded-lg bg-white text-slate-500 text-sm cursor-pointer font-[inherit] transition-all duration-200 hover:border-slate-300 hover:shadow-sm
+              ${loading ? 'opacity-60 cursor-not-allowed' : ''}`}
           >
-            <RefreshCw size={14} style={{ animation: loading ? 'spin 1s linear infinite' : 'none' }} />
+            <RefreshCw size={14} className={loading ? 'animate-spin-slow' : ''} />
             Refresh
           </button>
 
           {/* Constituency override */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', position: 'relative' }}>
-            <MapPin size={14} color="#64748B" />
+          <div className="flex items-center gap-1.5 relative">
+            <MapPin size={14} className="text-slate-400" />
             <input
               type="text"
               placeholder="Search constituency..."
@@ -144,7 +115,6 @@ export default function NewsFeed({ constituency: propConstituency, setConstituen
                 const val = e.target.value;
                 setSearchQuery(val);
                 setIsOpen(true);
-                
                 const match = ALL_CONSTITUENCIES.find(c => c.toLowerCase() === val.toLowerCase().trim());
                 if (match) {
                   setSelectedConstituency(match);
@@ -167,35 +137,12 @@ export default function NewsFeed({ constituency: propConstituency, setConstituen
                   }
                 }, 250);
               }}
-              style={{
-                padding: '7px 10px',
-                border: '1px solid #E2E8F0',
-                borderRadius: '7px',
-                fontSize: '13px',
-                fontFamily: 'inherit',
-                color: '#0F172A',
-                background: '#FFFFFF',
-                outline: 'none',
-                width: '160px'
-              }}
+              className="px-3 py-2 border border-slate-200 rounded-lg text-sm font-[inherit] text-slate-800 bg-white w-40 transition-all duration-200 hover:border-slate-300"
             />
             {isOpen && (
-              <div style={{
-                position: 'absolute',
-                top: '100%',
-                right: 0,
-                width: '200px',
-                maxHeight: '200px',
-                overflowY: 'auto',
-                backgroundColor: '#FFFFFF',
-                border: '1px solid #E2E8F0',
-                borderRadius: '7px',
-                zIndex: 100,
-                marginTop: '4px',
-                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)'
-              }}>
+              <div className="absolute top-full right-0 w-52 max-h-52 overflow-y-auto bg-white border border-slate-100 rounded-xl z-[100] mt-1 shadow-lg">
                 {filteredConstituencies.slice(0, 50).length === 0 ? (
-                  <div style={{ padding: '8px 12px', color: '#64748B', fontSize: '12px' }}>No matches</div>
+                  <div className="px-3 py-2 text-slate-400 text-xs">No matches</div>
                 ) : (
                   filteredConstituencies.slice(0, 50).map((c) => (
                     <div
@@ -206,14 +153,8 @@ export default function NewsFeed({ constituency: propConstituency, setConstituen
                         if (setConstituency) setConstituency(c);
                         setIsOpen(false);
                       }}
-                      style={{
-                        padding: '8px 12px',
-                        cursor: 'pointer',
-                        fontSize: '12px',
-                        color: '#0F172A',
-                        borderBottom: '1px solid #F1F5F9',
-                        backgroundColor: activeConstituency === c ? '#EFF6FF' : '#FFFFFF'
-                      }}
+                      className={`px-3 py-2.5 cursor-pointer text-sm text-slate-700 border-b border-slate-50 transition-colors hover:bg-slate-50
+                        ${activeConstituency === c ? 'bg-[#BFDDF0]/15 text-slate-900 font-medium' : ''}`}
                     >
                       {c}
                     </div>
@@ -234,73 +175,34 @@ export default function NewsFeed({ constituency: propConstituency, setConstituen
 
       {/* Content */}
       {error ? (
-        <div
-          style={{
-            padding: '32px',
-            textAlign: 'center',
-            backgroundColor: '#FEF2F2',
-            border: '1px solid #FECACA',
-            borderRadius: '10px',
-            color: '#DC2626',
-          }}
-        >
-          <div style={{ fontSize: '20px', marginBottom: '8px' }}>⚠️</div>
-          <p style={{ margin: 0, fontWeight: 500 }}>{error}</p>
+        <div className="p-8 text-center bg-red-50 border border-red-200 rounded-xl text-red-600">
+          <div className="text-xl mb-2">⚠️</div>
+          <p className="m-0 font-medium">{error}</p>
           <button
             onClick={refresh}
-            style={{
-              marginTop: '12px',
-              padding: '8px 16px',
-              border: '1px solid #FECACA',
-              borderRadius: '6px',
-              background: '#FFFFFF',
-              color: '#DC2626',
-              cursor: 'pointer',
-              fontFamily: 'inherit',
-              fontSize: '13px',
-            }}
+            className="mt-3 px-4 py-2 border border-red-200 rounded-lg bg-white text-red-600 cursor-pointer font-[inherit] text-sm hover:bg-red-50 transition-colors"
           >
             Try Again
           </button>
         </div>
       ) : loading ? (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-            gap: '16px',
-          }}
-        >
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
         </div>
       ) : articles.length === 0 ? (
-        <div
-          style={{
-            padding: '48px 32px',
-            textAlign: 'center',
-            backgroundColor: '#FFFFFF',
-            border: '1px solid #E2E8F0',
-            borderRadius: '10px',
-          }}
-        >
-          <div style={{ fontSize: '32px', marginBottom: '12px' }}>📰</div>
-          <p style={{ margin: 0, fontWeight: 600, color: '#0F172A', fontSize: '16px' }}>No articles found</p>
-          <p style={{ margin: '6px 0 0', color: '#64748B', fontSize: '14px' }}>
+        <div className="py-16 px-8 text-center bg-white border border-slate-100 rounded-xl">
+          <div className="text-4xl mb-4">📰</div>
+          <p className="m-0 font-semibold text-slate-800 text-base">No articles found</p>
+          <p className="m-0 mt-1.5 text-slate-500 text-sm">
             Try adjusting your filters or selecting a different constituency.
           </p>
         </div>
       ) : (
         <>
-          <div style={{ fontSize: '13px', color: '#64748B', marginBottom: '12px' }}>
+          <div className="text-sm text-slate-400 mb-3">
             Showing {articles.length} of {total} articles
           </div>
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-              gap: '16px',
-            }}
-          >
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {articles.map((article) => (
               <NewsCard key={article.id || article._id || Math.random()} article={article} />
             ))}
@@ -308,32 +210,15 @@ export default function NewsFeed({ constituency: propConstituency, setConstituen
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                marginTop: '24px',
-                paddingTop: '16px',
-                borderTop: '1px solid #E2E8F0',
-              }}
-            >
+            <div className="flex items-center justify-center gap-2 mt-8 pt-5 border-t border-slate-100">
               <button
                 onClick={() => handlePageChange(page - 1)}
                 disabled={page === 1}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '7px 12px',
-                  border: '1px solid #E2E8F0',
-                  borderRadius: '7px',
-                  background: page === 1 ? '#F8F9FA' : '#FFFFFF',
-                  color: page === 1 ? '#94A3B8' : '#475569',
-                  cursor: page === 1 ? 'not-allowed' : 'pointer',
-                  fontFamily: 'inherit',
-                  fontSize: '13px',
-                }}
+                className={`inline-flex items-center px-3.5 py-2 border rounded-lg text-sm font-[inherit] transition-all duration-200
+                  ${page === 1
+                    ? 'border-slate-100 bg-slate-50 text-slate-300 cursor-not-allowed'
+                    : 'border-slate-200 bg-white text-slate-500 cursor-pointer hover:border-slate-300'
+                  }`}
               >
                 <ChevronLeft size={15} /> Prev
               </button>
@@ -348,17 +233,11 @@ export default function NewsFeed({ constituency: propConstituency, setConstituen
                   <button
                     key={p}
                     onClick={() => handlePageChange(p)}
-                    style={{
-                      padding: '7px 12px',
-                      border: `1px solid ${p === page ? '#2563EB' : '#E2E8F0'}`,
-                      borderRadius: '7px',
-                      background: p === page ? '#EFF6FF' : '#FFFFFF',
-                      color: p === page ? '#2563EB' : '#475569',
-                      fontWeight: p === page ? 600 : 400,
-                      cursor: 'pointer',
-                      fontFamily: 'inherit',
-                      fontSize: '13px',
-                    }}
+                    className={`px-3.5 py-2 border rounded-lg text-sm font-[inherit] cursor-pointer transition-all duration-200
+                      ${p === page
+                        ? 'border-[#8CC0EB] bg-[#BFDDF0]/20 text-[#3B8BC7] font-semibold'
+                        : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'
+                      }`}
                   >
                     {p}
                   </button>
@@ -368,18 +247,11 @@ export default function NewsFeed({ constituency: propConstituency, setConstituen
               <button
                 onClick={() => handlePageChange(page + 1)}
                 disabled={page === totalPages}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '7px 12px',
-                  border: '1px solid #E2E8F0',
-                  borderRadius: '7px',
-                  background: page === totalPages ? '#F8F9FA' : '#FFFFFF',
-                  color: page === totalPages ? '#94A3B8' : '#475569',
-                  cursor: page === totalPages ? 'not-allowed' : 'pointer',
-                  fontFamily: 'inherit',
-                  fontSize: '13px',
-                }}
+                className={`inline-flex items-center px-3.5 py-2 border rounded-lg text-sm font-[inherit] transition-all duration-200
+                  ${page === totalPages
+                    ? 'border-slate-100 bg-slate-50 text-slate-300 cursor-not-allowed'
+                    : 'border-slate-200 bg-white text-slate-500 cursor-pointer hover:border-slate-300'
+                  }`}
               >
                 Next <ChevronRight size={15} />
               </button>
@@ -387,10 +259,6 @@ export default function NewsFeed({ constituency: propConstituency, setConstituen
           )}
         </>
       )}
-
-      <style>{`
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-      `}</style>
     </div>
   );
 }

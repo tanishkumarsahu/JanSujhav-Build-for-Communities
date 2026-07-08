@@ -1,19 +1,19 @@
-import { ExternalLink, Tag } from 'lucide-react';
+import { ExternalLink, Tag, ArrowRight } from 'lucide-react';
 
 const CATEGORY_COLORS = {
-  Politics: { bg: '#EFF6FF', color: '#2563EB', border: '#BFDBFE' },
-  Infrastructure: { bg: '#FFF7ED', color: '#D97706', border: '#FED7AA' },
-  Health: { bg: '#FFF0F3', color: '#DC2626', border: '#FECACA' },
-  Education: { bg: '#EFF6FF', color: '#2563EB', border: '#BFDBFE' },
-  Economy: { bg: '#F0FDF4', color: '#16A34A', border: '#BBF7D0' },
-  Environment: { bg: '#ECFDF5', color: '#059669', border: '#A7F3D0' },
-  General: { bg: '#F8F9FA', color: '#64748B', border: '#E2E8F0' },
+  Politics: { bg: 'bg-[#BFDDF0]/20', text: 'text-[#3B8BC7]', border: 'border-[#BFDDF0]' },
+  Infrastructure: { bg: 'bg-[#FFEBCC]/40', text: 'text-amber-700', border: 'border-[#FFEBCC]' },
+  Health: { bg: 'bg-red-50', text: 'text-red-600', border: 'border-red-200' },
+  Education: { bg: 'bg-[#BFDDF0]/20', text: 'text-[#3B8BC7]', border: 'border-[#BFDDF0]' },
+  Economy: { bg: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-emerald-200' },
+  Environment: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200' },
+  General: { bg: 'bg-slate-50', text: 'text-slate-500', border: 'border-slate-200' },
 };
 
 const SENTIMENT_STYLES = {
-  Positive: { bg: '#F0FDF4', color: '#16A34A', border: '#BBF7D0', label: 'Positive' },
-  Negative: { bg: '#FEF2F2', color: '#DC2626', border: '#FECACA', label: 'Negative' },
-  Neutral: { bg: '#F8F9FA', color: '#64748B', border: '#E2E8F0', label: 'Neutral' },
+  Positive: { bg: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-emerald-200', label: 'Positive' },
+  Negative: { bg: 'bg-red-50', text: 'text-red-600', border: 'border-red-200', label: 'Negative' },
+  Neutral: { bg: 'bg-slate-50', text: 'text-slate-500', border: 'border-slate-200', label: 'Neutral' },
 };
 
 const CATEGORY_ICONS = {
@@ -62,188 +62,62 @@ export default function NewsCard({ article }) {
   const sentStyle = sentiment ? SENTIMENT_STYLES[sentiment] || SENTIMENT_STYLES.Neutral : null;
 
   return (
-    <div
-      style={{
-        backgroundColor: '#FFFFFF',
-        border: '1px solid #E2E8F0',
-        borderRadius: '10px',
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column',
-        transition: 'border-color 0.15s ease',
-        cursor: 'default',
-      }}
-      onMouseEnter={(e) => e.currentTarget.style.borderColor = '#CBD5E1'}
-      onMouseLeave={(e) => e.currentTarget.style.borderColor = '#E2E8F0'}
-    >
+    <div className="bg-white border border-slate-100 rounded-xl overflow-hidden flex flex-col transition-all duration-300 cursor-default hover:border-[#BFDDF0] hover:shadow-md hover:-translate-y-0.5 group">
       {/* Image or category placeholder */}
       {image_url ? (
         <img
           src={image_url}
           alt={headline}
-          style={{
-            width: '100%',
-            height: '160px',
-            objectFit: 'cover',
-            borderBottom: '1px solid #E2E8F0',
-            backgroundColor: '#F1F5F9',
-          }}
+          className="w-full h-44 object-cover bg-slate-50"
           onError={(e) => {
             e.target.style.display = 'none';
-            e.target.nextSibling.style.display = 'flex';
+            if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex';
           }}
         />
       ) : null}
       {/* Fallback placeholder */}
       <div
-        style={{
-          display: image_url ? 'none' : 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '120px',
-          backgroundColor: '#F1F5F9',
-          borderBottom: '1px solid #E2E8F0',
-          fontSize: '36px',
-        }}
+        className={`${image_url ? 'hidden' : 'flex'} items-center justify-center h-32 bg-slate-50 text-4xl`}
       >
         {CATEGORY_ICONS[category] || '📰'}
       </div>
 
       {/* Content */}
-      <div style={{ padding: '14px', flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <div className="p-4 flex-1 flex flex-col gap-2.5">
         {/* Badges */}
-        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
-          <span
-            style={{
-              fontSize: '11px',
-              fontWeight: 600,
-              padding: '2px 8px',
-              borderRadius: '4px',
-              backgroundColor: catStyle.bg,
-              color: catStyle.color,
-              border: `1px solid ${catStyle.border}`,
-              textTransform: 'uppercase',
-              letterSpacing: '0.04em',
-            }}
-          >
+        <div className="flex gap-2 flex-wrap items-center">
+          <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-md border ${catStyle.bg} ${catStyle.text} ${catStyle.border} uppercase tracking-wide`}>
             {category}
           </span>
-          {sentStyle && (
-            <span
-              style={{
-                fontSize: '11px',
-                fontWeight: 500,
-                padding: '2px 8px',
-                borderRadius: '4px',
-                backgroundColor: sentStyle.bg,
-                color: sentStyle.color,
-                border: `1px solid ${sentStyle.border}`,
-              }}
-            >
-              {sentStyle.label}
-            </span>
+          {published_at && (
+            <span className="text-[11px] text-slate-400 ml-auto">{timeAgo(published_at)}</span>
           )}
         </div>
 
         {/* Headline */}
-        <h3
-          style={{
-            margin: 0,
-            fontSize: '14px',
-            fontWeight: 600,
-            color: '#0F172A',
-            lineHeight: '1.4',
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
-          }}
-        >
+        <h3 className="m-0 text-[15px] font-semibold text-slate-800 leading-snug line-clamp-2">
           {headline || 'No headline'}
         </h3>
 
         {/* Summary */}
         {summary && (
-          <p
-            style={{
-              margin: 0,
-              fontSize: '13px',
-              color: '#475569',
-              lineHeight: '1.5',
-              display: '-webkit-box',
-              WebkitLineClamp: 3,
-              WebkitBoxOrient: 'vertical',
-              overflow: 'hidden',
-              flex: 1,
-            }}
-          >
+          <p className="m-0 text-sm text-slate-500 leading-relaxed line-clamp-3 flex-1">
             {summary}
           </p>
         )}
 
-        {/* AI Tags */}
-        {ai_tags.length > 0 && (
-          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', alignItems: 'center' }}>
-            <Tag size={12} color="#64748B" />
-            {ai_tags.slice(0, 5).map((tag, i) => (
-              <span
-                key={i}
-                style={{
-                  fontSize: '11px',
-                  padding: '1px 6px',
-                  borderRadius: '3px',
-                  backgroundColor: '#F1F5F9',
-                  color: '#64748B',
-                  border: '1px solid #E2E8F0',
-                }}
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
+        {/* Footer: Read link */}
+        {source_url && (
+          <a
+            href={source_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-sm text-[#5BA3D9] no-underline font-medium mt-auto pt-2 hover:text-[#3B8BC7] transition-colors group/link"
+          >
+            Read Full Article
+            <ArrowRight size={14} className="transition-transform group-hover/link:translate-x-0.5" />
+          </a>
         )}
-
-        {/* Footer */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            paddingTop: '8px',
-            borderTop: '1px solid #F1F5F9',
-            marginTop: 'auto',
-          }}
-        >
-          <div>
-            {source_name && (
-              <span style={{ fontSize: '12px', color: '#64748B', fontWeight: 500 }}>{source_name}</span>
-            )}
-            {published_at && (
-              <span style={{ fontSize: '11px', color: '#94A3B8', marginLeft: '8px' }}>
-                {timeAgo(published_at)}
-              </span>
-            )}
-          </div>
-          {source_url && (
-            <a
-              href={source_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                fontSize: '12px',
-                color: '#2563EB',
-                textDecoration: 'none',
-                fontWeight: 500,
-                whiteSpace: 'nowrap',
-              }}
-            >
-              Read article <ExternalLink size={11} />
-            </a>
-          )}
-        </div>
       </div>
     </div>
   );
