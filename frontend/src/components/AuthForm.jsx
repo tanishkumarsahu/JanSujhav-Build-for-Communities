@@ -83,71 +83,97 @@ export default function AuthForm({ mode, onSuccess, onSwitch }) {
     }
   };
 
+  const inputStyle = {
+    width: '100%',
+    padding: '10px 12px',
+    border: '1px solid #E2E8F0',
+    borderRadius: '7px',
+    fontSize: '14px',
+    fontFamily: 'inherit',
+    color: '#0F172A',
+    outline: 'none',
+    boxSizing: 'border-box',
+  };
+
+  const labelStyle = {
+    display: 'block',
+    fontSize: '13px',
+    fontWeight: 600,
+    color: '#0F172A',
+    marginBottom: '6px',
+  };
+
   return (
-    <div className="max-w-md mx-auto mt-12 px-5">
-      <div className="bg-white border border-slate-100 rounded-2xl p-8 shadow-sm">
-        <h2 className="m-0 mb-1 text-xl font-bold text-slate-800">
+    <div style={{ maxWidth: '400px', margin: '48px auto', padding: '0 20px' }}>
+      <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '28px' }}>
+        <h2 style={{ margin: '0 0 4px', fontSize: '20px', fontWeight: 700, color: '#0F172A' }}>
           {isLogin ? 'Welcome back' : 'Create account'}
         </h2>
-        <p className="m-0 mb-6 text-sm text-slate-500">
+        <p style={{ margin: '0 0 24px', fontSize: '13px', color: '#64748B' }}>
           {isLogin ? 'Sign in to continue.' : 'Join the platform and make your voice heard.'}
         </p>
 
         {/* Google login */}
         {GOOGLE_CLIENT_ID && (
           <>
-            <div className="flex justify-center mb-4 w-full">
-              <div id="google-signin-btn-container" className="w-full min-h-[40px] flex justify-center" />
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px', width: '100%' }}>
+              <div id="google-signin-btn-container" style={{ width: '100%', minHeight: '40px', display: 'flex', justifyContent: 'center' }}></div>
             </div>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="flex-1 h-px bg-slate-100" />
-              <span className="text-xs text-slate-400">or</span>
-              <div className="flex-1 h-px bg-slate-100" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+              <div style={{ flex: 1, height: '1px', backgroundColor: '#E2E8F0' }} />
+              <span style={{ fontSize: '12px', color: '#94A3B8' }}>or</span>
+              <div style={{ flex: 1, height: '1px', backgroundColor: '#E2E8F0' }} />
             </div>
           </>
         )}
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           {!isLogin && (
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5">Full Name</label>
+              <label style={labelStyle}>Full Name</label>
               <input
                 type="text"
                 placeholder="Your name"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="w-full px-3.5 py-2.5 border border-slate-200 rounded-lg text-sm font-[inherit] text-slate-800 bg-white transition-all duration-200 hover:border-slate-300"
+                style={inputStyle}
+                onFocus={(e) => e.target.style.borderColor = '#2563EB'}
+                onBlur={(e) => e.target.style.borderColor = '#E2E8F0'}
               />
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-1.5">Email</label>
+            <label style={labelStyle}>Email</label>
             <input
               type="email"
               placeholder="you@example.com"
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
               required
-              className="w-full px-3.5 py-2.5 border border-slate-200 rounded-lg text-sm font-[inherit] text-slate-800 bg-white transition-all duration-200 hover:border-slate-300"
+              style={inputStyle}
+              onFocus={(e) => e.target.style.borderColor = '#2563EB'}
+              onBlur={(e) => e.target.style.borderColor = '#E2E8F0'}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-1.5">Password</label>
-            <div className="relative">
+            <label style={labelStyle}>Password</label>
+            <div style={{ position: 'relative' }}>
               <input
                 type={showPassword ? 'text' : 'password'}
                 placeholder="••••••••"
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
                 required
-                className="w-full px-3.5 py-2.5 pr-10 border border-slate-200 rounded-lg text-sm font-[inherit] text-slate-800 bg-white transition-all duration-200 hover:border-slate-300"
+                style={{ ...inputStyle, paddingRight: '40px' }}
+                onFocus={(e) => e.target.style.borderColor = '#2563EB'}
+                onBlur={(e) => e.target.style.borderColor = '#E2E8F0'}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer text-slate-400 p-0.5 hover:text-slate-600 transition-colors"
+                style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#64748B', padding: '2px' }}
               >
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
@@ -156,16 +182,23 @@ export default function AuthForm({ mode, onSuccess, onSwitch }) {
 
           {!isLogin && (
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5">I am a</label>
-              <div className="flex gap-3">
+              <label style={labelStyle}>I am a</label>
+              <div style={{ display: 'flex', gap: '10px' }}>
                 {['citizen', 'mp'].map((role) => (
                   <label
                     key={role}
-                    className={`flex items-center gap-2 px-4 py-2.5 border rounded-lg cursor-pointer flex-1 justify-center transition-all duration-200
-                      ${form.role === role
-                        ? 'border-[#8CC0EB] bg-[#BFDDF0]/15'
-                        : 'border-slate-200 bg-white hover:border-slate-300'
-                      }`}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '7px',
+                      padding: '8px 14px',
+                      border: `1px solid ${form.role === role ? '#2563EB' : '#E2E8F0'}`,
+                      borderRadius: '7px',
+                      backgroundColor: form.role === role ? '#EFF6FF' : '#FFFFFF',
+                      cursor: 'pointer',
+                      flex: 1,
+                      justifyContent: 'center',
+                    }}
                   >
                     <input
                       type="radio"
@@ -173,9 +206,9 @@ export default function AuthForm({ mode, onSuccess, onSwitch }) {
                       value={role}
                       checked={form.role === role}
                       onChange={() => setForm({ ...form, role })}
-                      className="accent-[#8CC0EB]"
+                      style={{ accentColor: '#2563EB' }}
                     />
-                    <span className={`text-sm font-medium capitalize ${form.role === role ? 'text-[#3B8BC7]' : 'text-slate-500'}`}>
+                    <span style={{ fontSize: '13px', fontWeight: 500, color: form.role === role ? '#2563EB' : '#475569', textTransform: 'capitalize' }}>
                       {role === 'mp' ? 'MP / Official' : 'Citizen'}
                     </span>
                   </label>
@@ -185,7 +218,7 @@ export default function AuthForm({ mode, onSuccess, onSwitch }) {
           )}
 
           {error && (
-            <div className="flex items-center gap-2 px-3.5 py-2.5 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '9px 12px', backgroundColor: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '7px', color: '#DC2626', fontSize: '13px' }}>
               <AlertCircle size={15} /> {error}
             </div>
           )}
@@ -193,26 +226,37 @@ export default function AuthForm({ mode, onSuccess, onSwitch }) {
           <button
             type="submit"
             disabled={loading}
-            className={`py-3 border-none rounded-xl font-semibold text-sm cursor-pointer font-[inherit] flex items-center justify-center gap-2 transition-all duration-200
-              ${loading
-                ? 'bg-[#BFDDF0] text-white cursor-not-allowed'
-                : 'bg-[#8CC0EB] text-white hover:bg-[#5BA3D9] hover:shadow-md'
-              }`}
+            style={{
+              padding: '11px',
+              border: 'none',
+              borderRadius: '8px',
+              background: loading ? '#93C5FD' : '#2563EB',
+              color: '#FFFFFF',
+              fontWeight: 600,
+              fontSize: '14px',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              fontFamily: 'inherit',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+            }}
           >
-            {loading ? <><Loader size={15} className="animate-spin-slow" /> Please wait...</> : (isLogin ? 'Sign In' : 'Create Account')}
+            {loading ? <><Loader size={15} style={{ animation: 'spin 1s linear infinite' }} /> Please wait...</> : (isLogin ? 'Sign In' : 'Create Account')}
           </button>
         </form>
 
-        <div className="mt-5 text-center text-sm text-slate-500">
+        <div style={{ marginTop: '16px', textAlign: 'center', fontSize: '13px', color: '#64748B' }}>
           {isLogin ? "Don't have an account?" : 'Already have an account?'}{' '}
           <button
             onClick={onSwitch}
-            className="bg-transparent border-none text-[#5BA3D9] font-semibold cursor-pointer font-[inherit] text-sm hover:text-[#3B8BC7] transition-colors"
+            style={{ background: 'none', border: 'none', color: '#2563EB', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', fontSize: '13px' }}
           >
             {isLogin ? 'Register' : 'Sign In'}
           </button>
         </div>
       </div>
+      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }

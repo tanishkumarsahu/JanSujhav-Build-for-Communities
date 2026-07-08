@@ -1,9 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { RefreshCw, ChevronLeft, ChevronRight, MapPin, X } from 'lucide-react';
+import { RefreshCw, ChevronLeft, ChevronRight, MapPin } from 'lucide-react';
 import useNewsPolling from '../hooks/useNewsPolling.js';
 import NewsCard from './NewsCard.jsx';
 import NewsFilterPanel from './NewsFilterPanel.jsx';
-import { post } from '../utils/api.js';
 
 import ALL_CONSTITUENCIES from '../utils/constituencies.json';
 
@@ -21,13 +20,13 @@ function timeAgoFull(date) {
 
 function SkeletonCard() {
   return (
-    <div className="bg-white border border-slate-100 rounded-xl overflow-hidden">
-      <div className="h-32 bg-slate-50 animate-pulse" />
-      <div className="p-4 flex flex-col gap-3">
-        <div className="h-5 bg-slate-50 rounded w-3/5 animate-pulse" />
-        <div className="h-3.5 bg-slate-50 rounded animate-pulse" />
-        <div className="h-3.5 bg-slate-50 rounded w-4/5 animate-pulse" />
-        <div className="h-3.5 bg-slate-50 rounded w-3/4 animate-pulse" />
+    <div className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-3xs animate-pulse">
+      <div className="h-40 bg-slate-100" />
+      <div className="p-4.5 flex flex-col gap-3">
+        <div className="h-4 bg-slate-200 rounded w-2/3" />
+        <div className="h-3.5 bg-slate-200 rounded w-full" />
+        <div className="h-3.5 bg-slate-200 rounded w-5/6" />
+        <div className="h-3.5 bg-slate-200 rounded w-4/5" />
       </div>
     </div>
   );
@@ -35,7 +34,7 @@ function SkeletonCard() {
 
 /**
  * NewsFeed — constituency news feed with polling, filters, pagination, AI filter
- * Props: { constituency }
+ * Props: { constituency: propConstituency, setConstituency }
  */
 export default function NewsFeed({ constituency: propConstituency, setConstituency }) {
   const [selectedConstituency, setSelectedConstituency] = useState(propConstituency || '');
@@ -77,36 +76,35 @@ export default function NewsFeed({ constituency: propConstituency, setConstituen
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-5 py-6">
+    <div className="max-w-7xl mx-auto px-4.5 py-6">
       {/* Header */}
-      <div className="flex items-start justify-between flex-wrap gap-3 mb-5">
+      <div className="flex items-start justify-between flex-wrap gap-4 mb-5">
         <div>
-          <h1 className="m-0 text-2xl font-bold text-slate-800 tracking-tight">
-            {activeConstituency ? `Latest Updates` : 'Latest Updates'}
+          <h1 className="text-xl font-bold text-slate-800">
+            {activeConstituency ? `News from ${activeConstituency}` : 'Constituency News'}
           </h1>
-          <p className="m-0 mt-1 text-sm text-slate-500">
-            Stay informed about community priorities, policy changes, and civic initiatives.
+          <p className="text-xs text-slate-450 mt-1 font-medium">
+            Aggregated local news with AI-powered analysis
           </p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
           {lastRefreshedAt && (
-            <span className="text-xs text-slate-400">
+            <span className="text-[10px] text-slate-400 font-bold tracking-wide">
               Last refreshed {timeAgoFull(lastRefreshedAt)}
             </span>
           )}
           <button
             onClick={refresh}
             disabled={loading}
-            className={`inline-flex items-center gap-1.5 px-3.5 py-2 border border-slate-200 rounded-lg bg-white text-slate-500 text-sm cursor-pointer font-[inherit] transition-all duration-200 hover:border-slate-300 hover:shadow-sm
-              ${loading ? 'opacity-60 cursor-not-allowed' : ''}`}
+            className="flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 rounded-xl bg-white hover:bg-slate-50 text-slate-600 text-xs font-semibold cursor-pointer disabled:cursor-not-allowed transition-all shadow-3xs"
           >
-            <RefreshCw size={14} className={loading ? 'animate-spin-slow' : ''} />
+            <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
             Refresh
           </button>
 
           {/* Constituency override */}
           <div className="flex items-center gap-1.5 relative">
-            <MapPin size={14} className="text-slate-400" />
+            <MapPin size={14} className="text-slate-450 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               placeholder="Search constituency..."
@@ -115,6 +113,7 @@ export default function NewsFeed({ constituency: propConstituency, setConstituen
                 const val = e.target.value;
                 setSearchQuery(val);
                 setIsOpen(true);
+                
                 const match = ALL_CONSTITUENCIES.find(c => c.toLowerCase() === val.toLowerCase().trim());
                 if (match) {
                   setSelectedConstituency(match);
@@ -137,12 +136,12 @@ export default function NewsFeed({ constituency: propConstituency, setConstituen
                   }
                 }, 250);
               }}
-              className="px-3 py-2 border border-slate-200 rounded-lg text-sm font-[inherit] text-slate-800 bg-white w-40 transition-all duration-200 hover:border-slate-300"
+              className="pl-9 pr-3.5 py-1.5 border border-slate-200 rounded-xl text-xs text-slate-800 bg-white placeholder-slate-450 focus:outline-none focus:border-brand-blue focus:ring-4 focus:ring-brand-blue/15 transition-all w-48"
             />
             {isOpen && (
-              <div className="absolute top-full right-0 w-52 max-h-52 overflow-y-auto bg-white border border-slate-100 rounded-xl z-[100] mt-1 shadow-lg">
+              <div className="absolute top-full right-0 w-52 max-h-52 overflow-y-auto bg-white border border-slate-200/80 rounded-xl z-50 mt-1 shadow-md">
                 {filteredConstituencies.slice(0, 50).length === 0 ? (
-                  <div className="px-3 py-2 text-slate-400 text-xs">No matches</div>
+                  <div className="p-3 text-slate-400 text-xs font-semibold">No matches</div>
                 ) : (
                   filteredConstituencies.slice(0, 50).map((c) => (
                     <div
@@ -153,8 +152,9 @@ export default function NewsFeed({ constituency: propConstituency, setConstituen
                         if (setConstituency) setConstituency(c);
                         setIsOpen(false);
                       }}
-                      className={`px-3 py-2.5 cursor-pointer text-sm text-slate-700 border-b border-slate-50 transition-colors hover:bg-slate-50
-                        ${activeConstituency === c ? 'bg-[#BFDDF0]/15 text-slate-900 font-medium' : ''}`}
+                      className={`p-2.5 px-3.5 cursor-pointer text-xs font-semibold border-b border-slate-100 hover:bg-slate-50 transition-colors ${
+                        activeConstituency === c ? 'bg-soft-blue/20 text-slate-800' : 'text-slate-700 bg-white'
+                      }`}
                     >
                       {c}
                     </div>
@@ -175,12 +175,12 @@ export default function NewsFeed({ constituency: propConstituency, setConstituen
 
       {/* Content */}
       {error ? (
-        <div className="p-8 text-center bg-red-50 border border-red-200 rounded-xl text-red-600">
-          <div className="text-xl mb-2">⚠️</div>
-          <p className="m-0 font-medium">{error}</p>
+        <div className="p-8 text-center bg-rose-50/50 border border-rose-100 rounded-2xl text-rose-700">
+          <div className="text-2xl mb-2">⚠️</div>
+          <p className="margin-0 font-bold text-sm">{error}</p>
           <button
             onClick={refresh}
-            className="mt-3 px-4 py-2 border border-red-200 rounded-lg bg-white text-red-600 cursor-pointer font-[inherit] text-sm hover:bg-red-50 transition-colors"
+            className="mt-3.5 px-4.5 py-2 border border-rose-250 bg-white hover:bg-rose-50 text-rose-700 rounded-xl cursor-pointer text-xs font-bold transition-all shadow-3xs"
           >
             Try Again
           </button>
@@ -190,16 +190,16 @@ export default function NewsFeed({ constituency: propConstituency, setConstituen
           {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
         </div>
       ) : articles.length === 0 ? (
-        <div className="py-16 px-8 text-center bg-white border border-slate-100 rounded-xl">
-          <div className="text-4xl mb-4">📰</div>
-          <p className="m-0 font-semibold text-slate-800 text-base">No articles found</p>
-          <p className="m-0 mt-1.5 text-slate-500 text-sm">
+        <div className="p-12 px-6 text-center bg-white border border-slate-200/80 rounded-2xl shadow-3xs">
+          <div className="text-3xl mb-3">📰</div>
+          <p className="font-bold text-slate-800 text-sm">No articles found</p>
+          <p className="text-xs text-slate-450 mt-1 font-medium">
             Try adjusting your filters or selecting a different constituency.
           </p>
         </div>
       ) : (
         <>
-          <div className="text-sm text-slate-400 mb-3">
+          <div className="text-xs text-slate-450 mb-3 font-semibold">
             Showing {articles.length} of {total} articles
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -210,17 +210,13 @@ export default function NewsFeed({ constituency: propConstituency, setConstituen
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2 mt-8 pt-5 border-t border-slate-100">
+            <div className="flex items-center justify-center gap-2 mt-8 pt-4.5 border-t border-slate-100">
               <button
                 onClick={() => handlePageChange(page - 1)}
                 disabled={page === 1}
-                className={`inline-flex items-center px-3.5 py-2 border rounded-lg text-sm font-[inherit] transition-all duration-200
-                  ${page === 1
-                    ? 'border-slate-100 bg-slate-50 text-slate-300 cursor-not-allowed'
-                    : 'border-slate-200 bg-white text-slate-500 cursor-pointer hover:border-slate-300'
-                  }`}
+                className="flex items-center gap-1 px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold cursor-pointer disabled:cursor-not-allowed transition-all shadow-3xs bg-white text-slate-600 disabled:bg-slate-50 disabled:text-slate-400"
               >
-                <ChevronLeft size={15} /> Prev
+                <ChevronLeft size={14} /> Prev
               </button>
 
               {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
@@ -233,11 +229,11 @@ export default function NewsFeed({ constituency: propConstituency, setConstituen
                   <button
                     key={p}
                     onClick={() => handlePageChange(p)}
-                    className={`px-3.5 py-2 border rounded-lg text-sm font-[inherit] cursor-pointer transition-all duration-200
-                      ${p === page
-                        ? 'border-[#8CC0EB] bg-[#BFDDF0]/20 text-[#3B8BC7] font-semibold'
-                        : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300'
-                      }`}
+                    className={`px-3 py-1.5 border text-xs font-bold rounded-xl transition-all shadow-3xs cursor-pointer ${
+                      p === page
+                        ? 'border-brand-blue bg-soft-blue/20 text-brand-blue scale-105'
+                        : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                    }`}
                   >
                     {p}
                   </button>
@@ -247,13 +243,9 @@ export default function NewsFeed({ constituency: propConstituency, setConstituen
               <button
                 onClick={() => handlePageChange(page + 1)}
                 disabled={page === totalPages}
-                className={`inline-flex items-center px-3.5 py-2 border rounded-lg text-sm font-[inherit] transition-all duration-200
-                  ${page === totalPages
-                    ? 'border-slate-100 bg-slate-50 text-slate-300 cursor-not-allowed'
-                    : 'border-slate-200 bg-white text-slate-500 cursor-pointer hover:border-slate-300'
-                  }`}
+                className="flex items-center gap-1 px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold cursor-pointer disabled:cursor-not-allowed transition-all shadow-3xs bg-white text-slate-600 disabled:bg-slate-50 disabled:text-slate-400"
               >
-                Next <ChevronRight size={15} />
+                Next <ChevronRight size={14} />
               </button>
             </div>
           )}

@@ -35,41 +35,33 @@ const LANGUAGES = [
 ];
 
 const CATEGORY_COLORS = {
-  Roads: { bg: '#FFF7ED', color: '#D97706', border: '#FED7AA', dot: '#F97316' },
-  Water: { bg: '#EFF6FF', color: '#2563EB', border: '#BFDBFE', dot: '#3B82F6' },
-  Education: { bg: '#F0FDF4', color: '#16A34A', border: '#BBF7D0', dot: '#22C55E' },
-  Health: { bg: '#FFF0F3', color: '#DC2626', border: '#FECACA', dot: '#EF4444' },
-  Electricity: { bg: '#FEFCE8', color: '#CA8A04', border: '#FEF08A', dot: '#EAB308' },
-  Sanitation: { bg: '#ECFDF5', color: '#059669', border: '#A7F3D0', dot: '#10B981' },
-  Other: { bg: '#F8F9FA', color: '#64748B', border: '#E2E8F0', dot: '#94A3B8' },
+  Roads: { bg: 'bg-amber-50/50', text: 'text-amber-700', border: 'border-amber-200', dot: 'bg-amber-500' },
+  Water: { bg: 'bg-blue-50/50', text: 'text-blue-755', border: 'border-blue-200', dot: 'bg-blue-500' },
+  Education: { bg: 'bg-emerald-50/50', text: 'text-emerald-700', border: 'border-emerald-200', dot: 'bg-emerald-500' },
+  Health: { bg: 'bg-rose-50/50', text: 'text-rose-700', border: 'border-rose-200', dot: 'bg-rose-500' },
+  Electricity: { bg: 'bg-yellow-50/50', text: 'text-yellow-700', border: 'border-yellow-250', dot: 'bg-yellow-500' },
+  Sanitation: { bg: 'bg-teal-50/50', text: 'text-teal-700', border: 'border-teal-200', dot: 'bg-teal-500' },
+  Other: { bg: 'bg-slate-50', text: 'text-slate-600', border: 'border-slate-200', dot: 'bg-slate-400' },
 };
 
 function InputLabel({ children, required, subtitle }) {
   return (
-    <div style={{ marginBottom: '6px' }}>
-      <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#0F172A' }}>
+    <div className="mb-1.5">
+      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
         {children}
-        {required && <span style={{ color: '#DC2626', marginLeft: '3px' }}>*</span>}
+        {required && <span className="text-rose-500 ml-0.5">*</span>}
       </label>
-      {subtitle && <span style={{ display: 'block', fontSize: '12px', color: '#64748B', marginTop: '2px' }}>{subtitle}</span>}
+      {subtitle && <span className="block text-[11px] text-slate-500 font-medium mt-0.5">{subtitle}</span>}
     </div>
   );
 }
 
-function inputStyle(focused, hasError) {
-  return {
-    width: '100%',
-    padding: '10px 14px',
-    border: `1.5px solid ${hasError ? '#DC2626' : focused ? '#2563EB' : '#CBD5E1'}`,
-    borderRadius: '8px',
-    fontSize: '14px',
-    fontFamily: 'inherit',
-    color: '#0F172A',
-    outline: 'none',
-    backgroundColor: '#FFFFFF',
-    transition: 'all 0.15s ease',
-    boxSizing: 'border-box',
-  };
+function getInputClass(hasError) {
+  return `w-full px-3.5 py-2.5 border rounded-lg text-sm text-slate-800 bg-slate-50/30 placeholder-slate-400 focus:outline-none transition-all ${
+    hasError 
+      ? 'border-rose-400 focus:border-rose-500 focus:ring-4 focus:ring-rose-100' 
+      : 'border-slate-200 focus:border-brand-blue focus:ring-4 focus:ring-brand-blue/15'
+  }`;
 }
 
 export default function CitizenSubmissionForm({ constituency: propConstituency, setConstituency, onSuccess }) {
@@ -92,7 +84,6 @@ export default function CitizenSubmissionForm({ constituency: propConstituency, 
   const [submitting, setSubmitting] = useState(false);
   const [submitResult, setSubmitResult] = useState(null);
   const [submitError, setSubmitError] = useState('');
-  const [fieldFocused, setFieldFocused] = useState({});
   const [formErrors, setFormErrors] = useState({});
 
   const descriptionRef = useRef(null);
@@ -205,7 +196,6 @@ export default function CitizenSubmissionForm({ constituency: propConstituency, 
     const errors = validate();
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
-      // scroll to first error
       const firstError = Object.keys(errors)[0];
       const element = document.getElementsByName(firstError)[0];
       if (element) element.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -241,84 +231,61 @@ export default function CitizenSubmissionForm({ constituency: propConstituency, 
     }
   };
 
-  const setFocused = (field, val) => setFieldFocused((prev) => ({ ...prev, [field]: val }));
-
   if (submitResult) {
-    const isSuccess = submitResult.success !== false;
-    const dataObj = submitResult.data || submitResult;
+    const dataObj = submitResult.data?.suggestion || submitResult.data || submitResult;
+    const catStyle = CATEGORY_COLORS[dataObj.category] || CATEGORY_COLORS.Other;
+
+    let parsedTags = [];
+    if (dataObj.ai_tags) {
+      if (Array.isArray(dataObj.ai_tags)) {
+        parsedTags = dataObj.ai_tags;
+      } else if (typeof dataObj.ai_tags === 'string') {
+        try {
+          parsedTags = JSON.parse(dataObj.ai_tags);
+        } catch (_) {
+          parsedTags = [];
+        }
+      }
+    }
 
     return (
-      <div style={{ maxWidth: '640px', margin: '48px auto', padding: '0 20px' }}>
-        <div
-          style={{
-            backgroundColor: '#FFFFFF',
-            border: '1.5px solid #CBD5E1',
-            borderRadius: '16px',
-            padding: '36px',
-            textAlign: 'center',
-          }}
-        >
-          <div style={{ width: '56px', height: '56px', borderRadius: '50%', backgroundColor: '#F0FDF4', border: '1.5px solid #BBF7D0', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
-            <CheckCircle size={32} color="#16A34A" />
+      <div className="max-w-2xl mx-auto px-5 py-12">
+        <div className="bg-white border border-slate-100 rounded-2xl p-8 shadow-sm text-center">
+          <div className="w-14 h-14 rounded-full bg-emerald-50 border border-emerald-250 flex items-center justify-center mx-auto mb-5 shadow-xs">
+            <CheckCircle size={32} className="text-emerald-600" />
           </div>
-          <h2 style={{ margin: '0 0 8px', fontSize: '24px', fontWeight: 700, color: '#0F172A', letterSpacing: '-0.02em' }}>
+          <h2 className="margin-0 mb-2 text-2xl font-extrabold text-slate-800 tracking-tight">
             Suggestion Filed Successfully!
           </h2>
-          <p style={{ margin: '0 0 28px', color: '#475569', fontSize: '15px', lineHeight: '1.5' }}>
-            Your proposal has been logged under ID <strong style={{ color: '#0F172A' }}>#{dataObj.id || 'N/A'}</strong>. The MP office has been notified.
+          <p className="margin-0 mb-7 text-slate-600 text-sm leading-relaxed">
+            Your proposal has been logged under ID <strong className="text-slate-800">#{dataObj.id || 'N/A'}</strong>. The MP office has been notified.
           </p>
 
           {/* AI Analysis Receipt */}
-          <div
-            style={{
-              backgroundColor: '#F8F9FA',
-              border: '1.5px solid #E2E8F0',
-              borderRadius: '12px',
-              padding: '24px',
-              textAlign: 'left',
-              marginBottom: '28px',
-            }}
-          >
-            <div style={{ fontSize: '12px', fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1.5px solid #E2E8F0', paddingBottom: '10px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Globe size={13} color="#64748B" /> AI Tagging & Translation Report
+          <div className="bg-slate-50/50 border border-slate-100 rounded-xl p-6 text-left mb-7">
+            <div className="text-[11px] font-bold text-slate-400 tracking-wider border-b border-slate-100 pb-2.5 mb-4 flex items-center gap-1.5 uppercase">
+              <Globe size={13} className="text-slate-400" /> AI Tagging & Translation Report
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+            <div className="grid grid-cols-2 gap-4 mb-4">
               <div>
-                <div style={{ fontSize: '12px', color: '#64748B', fontWeight: 500, marginBottom: '4px' }}>AI Category</div>
-                <span
-                  style={{
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    padding: '4px 12px',
-                    borderRadius: '20px',
-                    backgroundColor: CATEGORY_COLORS[dataObj.category]?.bg || '#F1F5F9',
-                    color: CATEGORY_COLORS[dataObj.category]?.color || '#475569',
-                    border: `1.5px solid ${CATEGORY_COLORS[dataObj.category]?.border || '#E2E8F0'}`,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '5px',
-                  }}
-                >
-                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: CATEGORY_COLORS[dataObj.category]?.dot || '#94A3B8' }} />
+                <div className="text-[10px] font-bold text-slate-400 tracking-wider mb-1 uppercase">AI Category</div>
+                <span className={`text-xs font-semibold px-3 py-1 rounded-full border inline-flex items-center gap-1.5 ${catStyle.bg} ${catStyle.text} ${catStyle.border}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${catStyle.dot}`} />
                   {dataObj.category || 'Other'}
                 </span>
               </div>
 
               <div>
-                <div style={{ fontSize: '12px', color: '#64748B', fontWeight: 500, marginBottom: '4px' }}>Sentiment Analysis</div>
+                <div className="text-[10px] font-bold text-slate-400 tracking-wider mb-1 uppercase">Sentiment Analysis</div>
                 <span
-                  style={{
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    padding: '4px 12px',
-                    borderRadius: '20px',
-                    backgroundColor: dataObj.sentiment === 'Negative' ? '#FEF2F2' : dataObj.sentiment === 'Positive' ? '#F0FDF4' : '#F8F9FA',
-                    color: dataObj.sentiment === 'Negative' ? '#DC2626' : dataObj.sentiment === 'Positive' ? '#16A34A' : '#64748B',
-                    border: `1.5px solid ${dataObj.sentiment === 'Negative' ? '#FECACA' : dataObj.sentiment === 'Positive' ? '#BBF7D0' : '#E2E8F0'}`,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                  }}
+                  className={`text-xs font-semibold px-3 py-1 rounded-full border inline-flex items-center ${
+                    dataObj.sentiment === 'Negative'
+                      ? 'bg-rose-50 text-rose-700 border-rose-200'
+                      : dataObj.sentiment === 'Positive'
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-250'
+                      : 'bg-slate-50 text-slate-650 border-slate-200'
+                  }`}
                 >
                   {dataObj.sentiment || 'Neutral'}
                 </span>
@@ -326,20 +293,20 @@ export default function CitizenSubmissionForm({ constituency: propConstituency, 
             </div>
 
             {dataObj.translated_text && dataObj.language !== 'en' && (
-              <div style={{ marginBottom: '16px', borderTop: '1px solid #E2E8F0', paddingTop: '12px' }}>
-                <div style={{ fontSize: '12px', color: '#64748B', fontWeight: 500, marginBottom: '4px' }}>English Translation</div>
-                <p style={{ margin: 0, fontSize: '13px', color: '#0F172A', fontStyle: 'italic', lineHeight: '1.5', backgroundColor: '#FFFFFF', padding: '10px', borderRadius: '6px', border: '1px solid #E2E8F0' }}>
+              <div className="mb-4 border-t border-slate-100 pt-3">
+                <div className="text-[10px] font-bold text-slate-400 tracking-wider mb-1 uppercase">English Translation</div>
+                <p className="margin-0 text-xs text-slate-800 italic leading-relaxed bg-white p-3 rounded-lg border border-slate-100 shadow-3xs">
                   "{dataObj.translated_text}"
                 </p>
               </div>
             )}
 
-            {dataObj.ai_tags && dataObj.ai_tags.length > 0 && (
-              <div style={{ borderTop: '1px solid #E2E8F0', paddingTop: '12px' }}>
-                <div style={{ fontSize: '12px', color: '#64748B', fontWeight: 500, marginBottom: '6px' }}>Extracted Keywords</div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                  {dataObj.ai_tags.map((tag, i) => (
-                    <span key={i} style={{ fontSize: '11px', fontWeight: 500, padding: '3px 8px', borderRadius: '4px', backgroundColor: '#FFFFFF', color: '#475569', border: '1.5px solid #CBD5E1' }}>
+            {parsedTags.length > 0 && (
+              <div className="border-t border-slate-100 pt-3">
+                <div className="text-[10px] font-bold text-slate-400 tracking-wider mb-1.5 uppercase">Extracted Keywords</div>
+                <div className="flex flex-wrap gap-1.5">
+                  {parsedTags.map((tag, i) => (
+                    <span key={i} className="text-[11px] font-medium px-2 py-0.5 rounded bg-white text-slate-600 border border-slate-200 shadow-3xs">
                       #{tag}
                     </span>
                   ))}
@@ -350,20 +317,7 @@ export default function CitizenSubmissionForm({ constituency: propConstituency, 
 
           <button
             onClick={() => setSubmitResult(null)}
-            style={{
-              padding: '12px 28px',
-              border: 'none',
-              borderRadius: '9px',
-              background: '#2563EB',
-              color: '#FFFFFF',
-              fontWeight: 600,
-              fontSize: '15px',
-              cursor: 'pointer',
-              fontFamily: 'inherit',
-              transition: 'background-color 0.15s ease',
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.background = '#1D4ED8'}
-            onMouseLeave={(e) => e.currentTarget.style.background = '#2563EB'}
+            className="px-6 py-3 border-none rounded-lg bg-brand-blue hover:bg-brand-blue/90 text-slate-900 font-semibold text-sm cursor-pointer transition-all shadow-sm hover:shadow-md"
           >
             Submit Another Suggestion
           </button>
@@ -373,91 +327,70 @@ export default function CitizenSubmissionForm({ constituency: propConstituency, 
   }
 
   return (
-    <div style={{ maxWidth: '800px', margin: '40px auto', padding: '0 20px' }}>
+    <div className="max-w-3xl mx-auto px-5 py-10">
       {/* Page Header */}
-      <div style={{ marginBottom: '32px' }}>
-        <h1 style={{ margin: '0 0 6px', fontSize: '28px', fontWeight: 700, color: '#0F172A', letterSpacing: '-0.02em' }}>
+      <div className="mb-8">
+        <h1 className="margin-0 mb-2 text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight">
           File a Development Proposal
         </h1>
-        <p style={{ margin: 0, fontSize: '15px', color: '#475569', lineHeight: 1.5 }}>
+        <p className="margin-0 text-sm md:text-base text-slate-600 leading-relaxed">
           Submit public requests, report community gaps, or propose upgrades. Your submission is instantly translated, categorized, and analyzed by the MP Office Planning AI.
         </p>
       </div>
 
-      <div
-        style={{
-          backgroundColor: '#FFFFFF',
-          border: '1.5px solid #CBD5E1',
-          borderRadius: '16px',
-          overflow: 'hidden',
-        }}
-      >
+      <div className="bg-white border border-slate-100 md:border-soft-blue/30 rounded-2xl shadow-sm overflow-hidden">
         {/* Form Header Info Banner */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '16px 24px', backgroundColor: '#F8F9FA', borderBottom: '1.5px solid #CBD5E1' }}>
-          <FileText size={18} color="#2563EB" />
-          <span style={{ fontSize: '13px', fontWeight: 600, color: '#475569' }}>
+        <div className="flex items-center gap-2 px-6 py-4 bg-slate-50/50 border-b border-slate-150">
+          <FileText size={18} className="text-brand-blue" />
+          <span className="text-[11px] font-bold text-slate-400 tracking-wider uppercase">
             Constituency Suggestion Dossier
           </span>
-          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
+          <div className="ml-auto flex items-center">
             {lat && lon ? (
-              <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: '#16A34A', fontWeight: 600, backgroundColor: '#ECFDF5', padding: '3px 10px', borderRadius: '12px', border: '1.5px solid #A7F3D0' }}>
+              <span className="flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-250/60 shadow-3xs">
                 <MapPin size={11} /> GPS Active
               </span>
             ) : (
               <button
                 type="button"
                 onClick={handleGPSClick}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  border: '1.5px solid #CBD5E1',
-                  background: '#FFFFFF',
-                  borderRadius: '12px',
-                  padding: '3px 10px',
-                  fontSize: '11px',
-                  fontWeight: 600,
-                  color: '#475569',
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
-                }}
+                className="flex items-center gap-1.5 border border-slate-200 bg-white hover:bg-slate-50 rounded-lg px-3 py-1 text-xs font-semibold text-slate-600 cursor-pointer transition-all shadow-3xs"
               >
-                <MapPin size={11} /> Get GPS Location
+                <MapPin size={11} className="text-slate-400" /> Get GPS Location
               </button>
             )}
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <form onSubmit={handleSubmit} className="p-6 md:p-8 flex flex-col gap-6">
           
           {/* Section 1: About & Location */}
-          <div style={{ borderBottom: '1.5px solid #E2E8F0', paddingBottom: '24px' }}>
-            <h3 style={{ margin: '0 0 16px', fontSize: '16px', fontWeight: 700, color: '#0F172A', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ width: '22px', height: '22px', borderRadius: '50%', backgroundColor: '#EFF6FF', color: '#2563EB', fontSize: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>1</span>
+          <div className="border-b border-slate-100 pb-6">
+            <h3 className="margin-0 mb-4 text-sm font-bold text-slate-800 flex items-center gap-2">
+              <span className="w-5.5 h-5.5 rounded-full bg-soft-blue/30 text-slate-800 text-[11px] flex items-center justify-center font-bold">1</span>
               Origin & Location
             </h3>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <InputLabel subtitle="Leave empty to file anonymously">Your Name (Optional)</InputLabel>
-                <div style={{ position: 'relative' }}>
-                  <User size={15} color="#94A3B8" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+                <div className="relative">
+                  <User size={15} className="text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     placeholder="Anonymous Citizen"
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    onFocus={() => setFocused('name', true)}
-                    onBlur={() => setFocused('name', false)}
-                    style={{ ...inputStyle(fieldFocused.name), paddingLeft: '36px' }}
+                    className={`${getInputClass(false)} pl-9`}
                   />
                 </div>
               </div>
 
               <div>
                 <InputLabel required subtitle="Detected automatically or manual override">Target Constituency</InputLabel>
-                <div style={{ position: 'relative' }}>
+                <div className="relative">
                   <input
+                    name="constituency"
                     type="text"
                     placeholder="Type to search constituency..."
                     value={searchQuery}
@@ -466,7 +399,6 @@ export default function CitizenSubmissionForm({ constituency: propConstituency, 
                       setSearchQuery(val);
                       setIsOpen(true);
                       
-                      // Auto-select exact match
                       const match = constituencies.find(c => c.toLowerCase() === val.toLowerCase().trim());
                       if (match) {
                         setForm((prev) => ({ ...prev, constituency: match }));
@@ -475,12 +407,8 @@ export default function CitizenSubmissionForm({ constituency: propConstituency, 
                         setForm((prev) => ({ ...prev, constituency: '' }));
                       }
                     }}
-                    onFocus={() => {
-                      setFocused('constituency', true);
-                      setIsOpen(true);
-                    }}
+                    onFocus={() => setIsOpen(true)}
                     onBlur={() => {
-                      setFocused('constituency', false);
                       setTimeout(() => {
                         setIsOpen(false);
                         const match = constituencies.find(c => c.toLowerCase() === searchQuery.toLowerCase().trim());
@@ -489,28 +417,14 @@ export default function CitizenSubmissionForm({ constituency: propConstituency, 
                           setForm((prev) => ({ ...prev, constituency: match }));
                           if (setConstituency) setConstituency(match);
                         } else {
-                          // Reset to previous valid selection, preventing custom inputs
                           setSearchQuery(form.constituency || '');
                         }
                       }, 250);
                     }}
-                    style={{ ...inputStyle(fieldFocused.constituency, !!formErrors.constituency), cursor: 'text' }}
+                    className={getInputClass(!!formErrors.constituency)}
                   />
                   {isOpen && (
-                    <div style={{
-                      position: 'absolute',
-                      top: '100%',
-                      left: 0,
-                      right: 0,
-                      maxHeight: '200px',
-                      overflowY: 'auto',
-                      backgroundColor: '#FFFFFF',
-                      border: '1.5px solid #CBD5E1',
-                      borderRadius: '8px',
-                      zIndex: 100,
-                      marginTop: '4px',
-                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)'
-                    }}>
+                    <div className="absolute top-full left-0 right-0 max-h-48 overflow-y-auto bg-white border border-slate-200/80 rounded-lg z-50 mt-1 shadow-md">
                       {detectedConstituency && detectedConstituency.toLowerCase().includes(searchQuery.toLowerCase()) && (
                         <div
                           onClick={() => {
@@ -519,22 +433,14 @@ export default function CitizenSubmissionForm({ constituency: propConstituency, 
                             if (setConstituency) setConstituency(detectedConstituency);
                             setIsOpen(false);
                           }}
-                          style={{
-                            padding: '10px 14px',
-                            cursor: 'pointer',
-                            fontSize: '13px',
-                            fontWeight: '600',
-                            color: '#2563EB',
-                            borderBottom: '1.5px solid #EFF6FF',
-                            backgroundColor: '#F8FAFC'
-                          }}
+                          className="px-3.5 py-2.5 cursor-pointer text-xs font-semibold text-brand-blue border-b border-blue-50 bg-slate-50/50 hover:bg-slate-50 transition-all"
                         >
                           📍 {detectedConstituency} (Your Location)
                         </div>
                       )}
                       
                       {filteredConstituencies.slice(0, 100).length === 0 ? (
-                        <div style={{ padding: '10px 14px', color: '#64748B', fontSize: '13px' }}>No matches found</div>
+                        <div className="px-3.5 py-2.5 text-slate-500 text-xs">No matches found</div>
                       ) : (
                         filteredConstituencies.slice(0, 100).map((c) => (
                           <div
@@ -545,14 +451,9 @@ export default function CitizenSubmissionForm({ constituency: propConstituency, 
                               if (setConstituency) setConstituency(c);
                               setIsOpen(false);
                             }}
-                            style={{
-                              padding: '10px 14px',
-                              cursor: 'pointer',
-                              fontSize: '13px',
-                              color: '#0F172A',
-                              borderBottom: '1.5px solid #F1F5F9',
-                              backgroundColor: form.constituency === c ? '#EFF6FF' : '#FFFFFF'
-                            }}
+                            className={`px-3.5 py-2.5 cursor-pointer text-xs text-slate-800 border-b border-slate-50 transition-all ${
+                              form.constituency === c ? 'bg-soft-blue/20 font-semibold' : 'bg-white hover:bg-slate-50'
+                            }`}
                           >
                             {c}
                           </div>
@@ -562,24 +463,24 @@ export default function CitizenSubmissionForm({ constituency: propConstituency, 
                   )}
                 </div>
                 {formErrors.constituency && (
-                  <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#DC2626', fontWeight: 500 }}>{formErrors.constituency}</p>
+                  <p className="margin-0 mt-1.5 text-xs text-rose-600 font-semibold flex items-center gap-1"><AlertCircle size={12} /> {formErrors.constituency}</p>
                 )}
               </div>
             </div>
           </div>
 
           {/* Section 2: Concern Details */}
-          <div style={{ borderBottom: '1.5px solid #E2E8F0', paddingBottom: '24px' }}>
-            <h3 style={{ margin: '0 0 16px', fontSize: '16px', fontWeight: 700, color: '#0F172A', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ width: '22px', height: '22px', borderRadius: '50%', backgroundColor: '#EFF6FF', color: '#2563EB', fontSize: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>2</span>
+          <div className="border-b border-slate-100 pb-6">
+            <h3 className="margin-0 mb-4 text-sm font-bold text-slate-800 flex items-center gap-2">
+              <span className="w-5.5 h-5.5 rounded-full bg-soft-blue/30 text-slate-800 text-[11px] flex items-center justify-center font-bold">2</span>
               Suggestion Details
             </h3>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div className="flex flex-col gap-5">
               {/* Category selector */}
               <div>
                 <InputLabel subtitle="Select the features related to your concern">Proposal Category</InputLabel>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px', marginTop: '8px' }}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 mt-2">
                   {CATEGORIES.map((cat) => {
                     const cs = CATEGORY_COLORS[cat.id];
                     const active = form.category === cat.id;
@@ -588,41 +489,20 @@ export default function CitizenSubmissionForm({ constituency: propConstituency, 
                         key={cat.id}
                         type="button"
                         onClick={() => setForm({ ...form, category: active ? '' : cat.id })}
-                        style={{
-                          padding: '12px',
-                          borderRadius: '10px',
-                          border: `1.5px solid ${active ? cs.border : '#CBD5E1'}`,
-                          background: active ? cs.bg : '#FFFFFF',
-                          color: active ? cs.color : '#475569',
-                          cursor: 'pointer',
-                          fontFamily: 'inherit',
-                          textAlign: 'left',
-                          transition: 'all 0.15s ease',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: '4px',
-                        }}
-                        onMouseEnter={(e) => {
-                          if (!active) {
-                            e.currentTarget.style.borderColor = '#94A3B8';
-                            e.currentTarget.style.backgroundColor = '#F8F9FA';
-                          }
-                        }}
-                        onMouseLeave={(e) => {
-                          if (!active) {
-                            e.currentTarget.style.borderColor = '#CBD5E1';
-                            e.currentTarget.style.backgroundColor = '#FFFFFF';
-                          }
-                        }}
+                        className={`p-3.5 rounded-xl border text-left cursor-pointer transition-all flex flex-col gap-1 hover:-translate-y-0.5 hover:shadow-xs ${
+                          active
+                            ? `border-slate-400 ${cs.bg} ${cs.text}`
+                            : 'border-slate-200/80 bg-white hover:border-brand-blue hover:bg-slate-50/50'
+                        }`}
                       >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div className="flex items-center gap-2">
                           {(() => {
                             const IconComponent = cat.icon;
-                            return <IconComponent size={16} color={active ? cs.color : '#64748B'} />;
+                            return <IconComponent size={16} className={active ? cs.text : 'text-slate-500'} />;
                           })()}
-                          <span style={{ fontSize: '13px', fontWeight: 700 }}>{cat.label}</span>
+                          <span className="text-xs font-bold">{cat.label}</span>
                         </div>
-                        <span style={{ fontSize: '11px', color: active ? cs.color : '#64748B', lineHeight: '1.3' }}>
+                        <span className={`text-[10px] leading-relaxed ${active ? cs.text : 'text-slate-400'}`}>
                           {cat.desc}
                         </span>
                       </button>
@@ -640,78 +520,53 @@ export default function CitizenSubmissionForm({ constituency: propConstituency, 
                   placeholder="e.g., Road repair required outside Primary Health Centre"
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  onFocus={() => setFocused('title', true)}
-                  onBlur={() => setFocused('title', false)}
-                  style={inputStyle(fieldFocused.title, !!formErrors.title)}
+                  className={getInputClass(!!formErrors.title)}
                 />
                 {formErrors.title && (
-                  <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#DC2626', fontWeight: 500 }}>{formErrors.title}</p>
+                  <p className="margin-0 mt-1.5 text-xs text-rose-600 font-semibold flex items-center gap-1"><AlertCircle size={12} /> {formErrors.title}</p>
                 )}
               </div>
 
               {/* Description */}
               <div>
-                <InputLabel required subtitle="Describe the issue or proposal in detail. Include exact location landmarks if helpful.">Detailed Proposal</InputLabel>
+                <InputLabel required subtitle="Describe the issue or proposal in detail. Include landmarks if helpful.">Detailed Proposal</InputLabel>
                 <textarea
                   name="description"
                   ref={descriptionRef}
                   placeholder="Provide background context, problems faced, and suggested solutions..."
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  onFocus={() => setFocused('description', true)}
-                  onBlur={() => setFocused('description', false)}
                   rows={6}
-                  style={{ ...inputStyle(fieldFocused.description, !!formErrors.description), resize: 'vertical', minHeight: '140px' }}
+                  className={`${getInputClass(!!formErrors.description)} resize-y min-h-[140px]`}
                 />
                 {formErrors.description && (
-                  <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#DC2626', fontWeight: 500 }}>{formErrors.description}</p>
+                  <p className="margin-0 mt-1.5 text-xs text-rose-600 font-semibold flex items-center gap-1"><AlertCircle size={12} /> {formErrors.description}</p>
                 )}
 
                 {/* Voice Input Section */}
-                <div
-                  style={{
-                    marginTop: '12px',
-                    padding: '16px',
-                    backgroundColor: '#F8F9FA',
-                    border: '1.5px solid #E2E8F0',
-                    borderRadius: '10px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '12px',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Mic size={15} color="#2563EB" />
-                    <span style={{ fontSize: '13px', fontWeight: 700, color: '#0F172A' }}>Speech-to-Text Transcription</span>
-                    <span style={{ fontSize: '11px', color: '#64748B', backgroundColor: '#E2E8F0', padding: '2px 8px', borderRadius: '10px', fontWeight: 500 }}>Browser-Native</span>
+                <div className="mt-3 p-4 bg-slate-50/50 border border-slate-100 rounded-xl flex flex-col gap-3">
+                  <div className="flex items-center gap-1.5">
+                    <Mic size={15} className="text-brand-blue" />
+                    <span className="text-xs font-bold text-slate-800">Speech-to-Text Transcription</span>
+                    <span className="text-[10px] text-slate-500 bg-slate-150 px-2 py-0.5 rounded-full font-semibold">Browser-Native</span>
                   </div>
 
                   {!isSupported ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#D97706', backgroundColor: '#FFFBEB', border: '1.5px solid #FDE68A', padding: '8px 12px', borderRadius: '6px' }}>
+                    <div className="flex items-center gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-200/80 p-2.5 rounded-lg">
                       <AlertCircle size={14} />
                       Voice input is not supported in this browser. Please use Google Chrome or Microsoft Edge.
                     </div>
                   ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                    <div className="flex flex-col gap-2.5">
+                      <div className="flex items-center gap-4 flex-wrap">
                         
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span style={{ fontSize: '12px', color: '#64748B', fontWeight: 500 }}>Language:</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs text-slate-500 font-semibold">Language:</span>
                           <select
                             value={voiceLang}
                             onChange={(e) => setVoiceLang(e.target.value)}
                             disabled={isListening}
-                            style={{
-                              padding: '5px 10px',
-                              border: '1.5px solid #CBD5E1',
-                              borderRadius: '6px',
-                              fontSize: '13px',
-                              fontFamily: 'inherit',
-                              backgroundColor: '#FFFFFF',
-                              color: '#0F172A',
-                              cursor: isListening ? 'not-allowed' : 'pointer',
-                              outline: 'none',
-                            }}
+                            className="px-2.5 py-1 border border-slate-200 rounded-md text-xs text-slate-800 bg-white cursor-pointer focus:outline-none"
                           >
                             {LANGUAGES.map((lang) => (
                               <option key={lang.code} value={lang.code}>
@@ -721,38 +576,26 @@ export default function CitizenSubmissionForm({ constituency: propConstituency, 
                           </select>
                         </div>
 
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div className="flex items-center gap-3">
                           <button
                             type="button"
                             onClick={isListening ? stop : start}
-                            style={{
-                              position: 'relative',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              width: '42px',
-                              height: '42px',
-                              borderRadius: '50%',
-                              border: `1.5px solid ${isListening ? '#DC2626' : '#CBD5E1'}`,
-                              background: isListening ? '#FEF2F2' : '#FFFFFF',
-                              cursor: 'pointer',
-                              flexShrink: 0,
-                              transition: 'all 0.15s ease',
-                            }}
-                            className={isListening ? 'mic-pulse' : ''}
+                            className={`relative w-11 h-11 rounded-full border flex items-center justify-center cursor-pointer transition-all flex-shrink-0 ${
+                              isListening ? 'border-rose-500 bg-rose-50/50 mic-pulse' : 'border-slate-200 bg-white hover:bg-slate-50'
+                            }`}
                           >
                             {isListening ? (
-                              <MicOff size={18} color="#DC2626" />
+                              <MicOff size={18} className="text-rose-600" />
                             ) : (
-                              <Mic size={18} color="#475569" />
+                              <Mic size={18} className="text-slate-500" />
                             )}
                           </button>
 
-                          <div style={{ display: 'flex', flexDirection: 'column' }}>
-                            <span style={{ fontSize: '13px', fontWeight: 600, color: isListening ? '#DC2626' : '#0F172A' }}>
+                          <div className="flex flex-col">
+                            <span className={`text-xs font-bold ${isListening ? 'text-rose-600' : 'text-slate-800'}`}>
                               {isListening ? 'Recording Voice...' : 'Transcribe Suggestion'}
                             </span>
-                            <span style={{ fontSize: '11px', color: '#64748B' }}>
+                            <span className="text-[10px] text-slate-400">
                               {isListening ? 'Click mic to finish & insert' : 'Speak to append text below'}
                             </span>
                           </div>
@@ -760,36 +603,25 @@ export default function CitizenSubmissionForm({ constituency: propConstituency, 
 
                         {/* Live CSS Waveform Animation when listening */}
                         {isListening && (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginLeft: 'auto', height: '16px' }}>
-                            <div className="voice-wave-bar" style={{ height: '4px' }}></div>
-                            <div className="voice-wave-bar" style={{ height: '4px' }}></div>
-                            <div className="voice-wave-bar" style={{ height: '4px' }}></div>
-                            <div className="voice-wave-bar" style={{ height: '4px' }}></div>
-                            <div className="voice-wave-bar" style={{ height: '4px' }}></div>
+                          <div className="flex items-center gap-0.5 ml-auto h-4">
+                            <div className="voice-wave-bar h-1"></div>
+                            <div className="voice-wave-bar h-1"></div>
+                            <div className="voice-wave-bar h-1"></div>
+                            <div className="voice-wave-bar h-1"></div>
+                            <div className="voice-wave-bar h-1"></div>
                           </div>
                         )}
                       </div>
 
                       {/* Interim preview */}
                       {interimText && (
-                        <div
-                          style={{
-                            padding: '10px 12px',
-                            backgroundColor: '#FFFFFF',
-                            border: '1.5px solid #E2E8F0',
-                            borderRadius: '8px',
-                            fontSize: '13px',
-                            color: '#64748B',
-                            fontStyle: 'italic',
-                            lineHeight: '1.4',
-                          }}
-                        >
+                        <div className="p-3 bg-white border border-slate-100 rounded-lg text-xs text-slate-500 italic leading-relaxed shadow-3xs">
                           👂 Hearing: "{interimText}..."
                         </div>
                       )}
 
                       {voiceError && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: '#DC2626' }}>
+                        <div className="flex items-center gap-1.5 text-xs text-rose-600 font-semibold">
                           <AlertCircle size={13} /> {voiceError}
                         </div>
                       )}
@@ -802,66 +634,41 @@ export default function CitizenSubmissionForm({ constituency: propConstituency, 
 
           {/* Section 3: Attachments */}
           <div>
-            <h3 style={{ margin: '0 0 16px', fontSize: '16px', fontWeight: 700, color: '#0F172A', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ width: '22px', height: '22px', borderRadius: '50%', backgroundColor: '#EFF6FF', color: '#2563EB', fontSize: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>3</span>
+            <h3 className="margin-0 mb-4 text-sm font-bold text-slate-800 flex items-center gap-2">
+              <span className="w-5.5 h-5.5 rounded-full bg-soft-blue/30 text-slate-800 text-[11px] flex items-center justify-center font-bold">3</span>
               Evidence & Attachments
             </h3>
 
             <InputLabel subtitle="Select or drop a photo of the location showing the issue">Location Photo (Optional)</InputLabel>
             <div
               onClick={() => fileInputRef.current?.click()}
-              style={{
-                border: '2px dashed #CBD5E1',
-                borderRadius: '12px',
-                padding: '24px',
-                textAlign: 'center',
-                cursor: 'pointer',
-                backgroundColor: '#F8F9FA',
-                transition: 'all 0.15s ease',
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#2563EB'; e.currentTarget.style.backgroundColor = '#EFF6FF' + '10'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#CBD5E1'; e.currentTarget.style.backgroundColor = '#F8F9FA'; }}
+              className="border-2 border-dashed border-slate-200 hover:border-brand-blue rounded-xl p-6 text-center cursor-pointer bg-slate-50/40 hover:bg-soft-blue/5 transition-all"
             >
               {photoPreview ? (
-                <div style={{ position: 'relative', display: 'inline-block' }}>
+                <div className="relative inline-block">
                   <img
                     src={photoPreview}
                     alt="Uploaded Evidence"
-                    style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: '8px', border: '1px solid #CBD5E1', objectFit: 'cover' }}
+                    className="max-w-full max-h-48 rounded-lg border border-slate-200 object-cover"
                   />
                   <button
                     type="button"
                     onClick={(e) => { e.stopPropagation(); setPhotoFile(null); setPhotoPreview(null); }}
-                    style={{
-                      position: 'absolute',
-                      top: '-10px',
-                      right: '-10px',
-                      width: '24px',
-                      height: '24px',
-                      borderRadius: '50%',
-                      border: '1.5px solid #CBD5E1',
-                      background: '#FFFFFF',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      color: '#475569',
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-                    }}
+                    className="absolute -top-2.5 -right-2.5 w-6 h-6 rounded-full border border-slate-200 bg-white flex items-center justify-center cursor-pointer text-slate-500 hover:bg-slate-50 shadow-xs"
                   >
                     <X size={13} />
                   </button>
                 </div>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1.5px solid #E2E8F0' }}>
-                    <Camera size={20} color="#475569" />
+                <div className="flex flex-col items-center gap-2">
+                  <div className="w-11 h-11 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200/60 shadow-3xs">
+                    <Camera size={20} className="text-slate-500" />
                   </div>
                   <div>
-                    <span style={{ fontSize: '14px', fontWeight: 600, color: '#2563EB' }}>Click to upload</span>
-                    <span style={{ fontSize: '14px', color: '#475569' }}> or drag and drop</span>
+                    <span className="text-xs font-semibold text-brand-blue">Click to upload</span>
+                    <span className="text-xs text-slate-500 font-medium"> or drag and drop</span>
                   </div>
-                  <span style={{ fontSize: '12px', color: '#64748B' }}>PNG, JPG, WEBP or JPEG up to 10MB</span>
+                  <span className="text-[10px] text-slate-400">PNG, JPG, WEBP or JPEG up to 10MB</span>
                 </div>
               )}
             </div>
@@ -870,44 +677,29 @@ export default function CitizenSubmissionForm({ constituency: propConstituency, 
               type="file"
               accept="image/*"
               onChange={handlePhotoChange}
-              style={{ display: 'none' }}
+              className="hidden"
             />
           </div>
 
           {/* Form error block */}
           {submitError && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 16px', backgroundColor: '#FEF2F2', border: '1.5px solid #FECACA', borderRadius: '8px', color: '#DC2626', fontSize: '14px' }}>
+            <div className="flex items-center gap-2 p-3.5 bg-rose-50 border border-rose-100 rounded-lg text-rose-600 text-xs font-semibold">
               <AlertCircle size={16} /> {submitError}
             </div>
           )}
 
           {/* Submit Action */}
-          <div style={{ borderTop: '1.5px solid #E2E8F0', paddingTop: '24px', marginTop: '8px', display: 'flex', justifyContent: 'flex-end' }}>
+          <div className="border-t border-slate-100 pt-5 mt-2 flex justify-end">
             <button
               type="submit"
               disabled={submitting}
-              style={{
-                padding: '12px 32px',
-                border: 'none',
-                borderRadius: '8px',
-                background: submitting ? '#93C5FD' : '#2563EB',
-                color: '#FFFFFF',
-                fontWeight: 600,
-                fontSize: '15px',
-                cursor: submitting ? 'not-allowed' : 'pointer',
-                fontFamily: 'inherit',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                transition: 'background-color 0.15s ease',
-              }}
-              onMouseEnter={(e) => { if (!submitting) e.currentTarget.style.background = '#1D4ED8'; }}
-              onMouseLeave={(e) => { if (!submitting) e.currentTarget.style.background = '#2563EB'; }}
+              className={`px-6 py-3 rounded-lg text-slate-900 font-semibold text-sm cursor-pointer flex items-center justify-center gap-2 transition-all border-none ${
+                submitting ? 'bg-brand-blue/50 cursor-not-allowed' : 'bg-brand-blue hover:bg-brand-blue/90 shadow-sm'
+              }`}
             >
               {submitting ? (
                 <>
-                  <Loader size={16} style={{ animation: 'spin 1s linear infinite' }} />
+                  <Loader size={16} className="animate-spin" />
                   Submitting Proposal...
                 </>
               ) : (
@@ -919,14 +711,13 @@ export default function CitizenSubmissionForm({ constituency: propConstituency, 
       </div>
 
       <style>{`
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         @keyframes bounce {
           0%, 100% { height: 4px; }
           50% { height: 16px; }
         }
         .voice-wave-bar {
           width: 3px;
-          background-color: #DC2626;
+          background-color: #EF4444;
           border-radius: 1.5px;
           animation: bounce 0.8s ease-in-out infinite;
         }

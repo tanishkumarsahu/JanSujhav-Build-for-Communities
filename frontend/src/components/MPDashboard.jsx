@@ -14,17 +14,17 @@ const SENTIMENTS = ['All', 'Positive', 'Negative', 'Neutral'];
 const STATUSES = ['All', 'Pending', 'Under Review', 'In Progress', 'Resolved', 'Rejected'];
 
 const SEVERITY_STYLES = {
-  High: { bg: '#FEF2F2', color: '#DC2626', border: '#FECACA' },
-  Medium: { bg: '#FFF7ED', color: '#D97706', border: '#FED7AA' },
-  Low: { bg: '#F0FDF4', color: '#16A34A', border: '#BBF7D0' },
+  High: 'bg-rose-50 text-rose-700 border-rose-100',
+  Medium: 'bg-amber-50 text-amber-700 border-amber-100',
+  Low: 'bg-emerald-50 text-emerald-700 border-emerald-100',
 };
 
 const STATUS_STYLES = {
-  Pending: { bg: '#FFF7ED', color: '#D97706', border: '#FED7AA' },
-  'Under Review': { bg: '#EFF6FF', color: '#2563EB', border: '#BFDBFE' },
-  'In Progress': { bg: '#EFF6FF', color: '#2563EB', border: '#BFDBFE' },
-  Resolved: { bg: '#F0FDF4', color: '#16A34A', border: '#BBF7D0' },
-  Rejected: { bg: '#F8F9FA', color: '#64748B', border: '#E2E8F0' },
+  Pending: 'bg-amber-50 text-amber-700 border-amber-100/60',
+  'Under Review': 'bg-blue-50 text-blue-700 border-blue-100/60',
+  'In Progress': 'bg-indigo-50 text-indigo-750 border-indigo-100/60',
+  Resolved: 'bg-emerald-50 text-emerald-700 border-emerald-100/60',
+  Rejected: 'bg-slate-50 text-slate-550 border-slate-200',
 };
 
 const CONSTITUENCIES = [
@@ -33,56 +33,40 @@ const CONSTITUENCIES = [
   'Pune', 'Lucknow', 'Ahmedabad East',
 ];
 
-function StatCard({ label, value, icon: Icon, color = '#2563EB', subtitle }) {
+function StatCard({ label, value, icon: Icon, theme = 'blue', subtitle }) {
+  const themes = {
+    blue: {
+      text: 'text-brand-blue',
+      bg: 'bg-soft-blue/20 border-soft-blue/50',
+    },
+    amber: {
+      text: 'text-amber-600',
+      bg: 'bg-amber-50/50 border-amber-200/50',
+    },
+    green: {
+      text: 'text-emerald-600',
+      bg: 'bg-emerald-50/50 border-emerald-250/50',
+    },
+  };
+  const th = themes[theme] || themes.blue;
+
   return (
-    <div
-      style={{
-        backgroundColor: '#FFFFFF',
-        border: '1px solid #E2E8F0',
-        borderRadius: '10px',
-        padding: '18px 20px',
-        display: 'flex',
-        alignItems: 'flex-start',
-        gap: '14px',
-        flex: '1 1 160px',
-      }}
-    >
-      <div
-        style={{
-          width: '40px',
-          height: '40px',
-          borderRadius: '8px',
-          backgroundColor: `${color}15`,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexShrink: 0,
-          border: `1px solid ${color}30`,
-        }}
-      >
-        <Icon size={20} color={color} />
+    <div className="bg-white border border-slate-200/80 rounded-2xl p-4.5 flex items-start gap-3.5 flex-1 min-w-[160px] shadow-3xs">
+      <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 border ${th.bg} ${th.text}`}>
+        <Icon size={20} />
       </div>
       <div>
-        <div style={{ fontSize: '24px', fontWeight: 700, color: '#0F172A', lineHeight: 1.2 }}>{value}</div>
-        <div style={{ fontSize: '13px', color: '#475569', marginTop: '2px' }}>{label}</div>
-        {subtitle && <div style={{ fontSize: '12px', color: '#94A3B8', marginTop: '2px' }}>{subtitle}</div>}
+        <div className="text-xl font-extrabold text-slate-800 leading-none">{value}</div>
+        <div className="text-xs text-slate-500 font-semibold mt-1">{label}</div>
+        {subtitle && <div className="text-[10px] text-slate-400 font-semibold mt-0.5">{subtitle}</div>}
       </div>
     </div>
   );
 }
 
-function Badge({ label, style: s = {} }) {
+function Badge({ label, className = '' }) {
   return (
-    <span
-      style={{
-        fontSize: '11px',
-        fontWeight: 600,
-        padding: '2px 8px',
-        borderRadius: '4px',
-        display: 'inline-block',
-        ...s,
-      }}
-    >
+    <span className={`text-[10px] font-bold px-2 py-0.5 rounded border inline-block tracking-wide shadow-3xs ${className}`}>
       {label}
     </span>
   );
@@ -107,43 +91,43 @@ function OverviewTab({ constituency }) {
   const gaps = overview?.infrastructure_gaps || [];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <div className="flex flex-col gap-5">
       {/* Stat cards */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
-        <StatCard label="Total Suggestions" value={stats.total ?? '—'} icon={FileText} color="#2563EB" />
-        <StatCard label="Pending Review" value={stats.pending ?? '—'} icon={AlertTriangle} color="#D97706" />
-        <StatCard label="Top Category" value={stats.top_category ?? '—'} icon={TrendingUp} color="#16A34A" />
-        <StatCard label="Active Projects" value={stats.active_projects ?? '—'} icon={CheckCircle} color="#2563EB" />
+      <div className="flex flex-wrap gap-3">
+        <StatCard label="Total Suggestions" value={stats.total ?? '—'} icon={FileText} theme="blue" />
+        <StatCard label="Pending Review" value={stats.pending ?? '—'} icon={AlertTriangle} theme="amber" />
+        <StatCard label="Top Category" value={stats.top_category ?? '—'} icon={TrendingUp} theme="green" />
+        <StatCard label="Active Projects" value={stats.active_projects ?? '—'} icon={CheckCircle} theme="blue" />
       </div>
 
       {loading && (
-        <div style={{ textAlign: 'center', padding: '24px', color: '#64748B', fontSize: '14px' }}>
-          <Loader size={20} style={{ animation: 'spin 1s linear infinite', marginBottom: '8px', display: 'block', margin: '0 auto 8px' }} />
+        <div className="text-center py-6 text-slate-450 text-xs font-semibold flex flex-col items-center gap-2">
+          <Loader size={18} className="animate-spin text-brand-blue" />
           Loading overview...
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Demographics */}
-        <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '18px' }}>
-          <h3 style={{ margin: '0 0 14px', fontSize: '14px', fontWeight: 600, color: '#0F172A' }}>
+        <div className="bg-white border border-slate-200/85 rounded-2xl p-5 shadow-3xs">
+          <h3 className="m-0 mb-3.5 text-xs font-bold text-slate-700 tracking-wider uppercase">
             Constituency Demographics
           </h3>
           {demographics.length === 0 ? (
-            <div style={{ color: '#94A3B8', fontSize: '13px' }}>No demographic data available.</div>
+            <div className="text-slate-400 text-xs font-bold py-2">No demographic data available.</div>
           ) : (
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+            <table className="w-full border-collapse text-xs font-medium">
               <thead>
-                <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
-                  <th style={{ textAlign: 'left', padding: '6px 0', color: '#64748B', fontWeight: 600 }}>Category</th>
-                  <th style={{ textAlign: 'right', padding: '6px 0', color: '#64748B', fontWeight: 600 }}>Value</th>
+                <tr className="border-b border-slate-200">
+                  <th className="text-left py-2 text-slate-450 font-bold uppercase tracking-wider">Category</th>
+                  <th className="text-right py-2 text-slate-450 font-bold uppercase tracking-wider">Value</th>
                 </tr>
               </thead>
               <tbody>
                 {demographics.map((row, i) => (
-                  <tr key={i} style={{ borderBottom: '1px solid #F1F5F9' }}>
-                    <td style={{ padding: '7px 0', color: '#475569' }}>{row.label}</td>
-                    <td style={{ padding: '7px 0', textAlign: 'right', color: '#0F172A', fontWeight: 500 }}>{row.value}</td>
+                  <tr key={i} className="border-b border-slate-100 last:border-b-0">
+                    <td className="py-2.5 text-slate-600 font-semibold">{row.label}</td>
+                    <td className="py-2.5 text-right text-slate-800 font-extrabold">{row.value}</td>
                   </tr>
                 ))}
               </tbody>
@@ -152,31 +136,23 @@ function OverviewTab({ constituency }) {
         </div>
 
         {/* Infrastructure Gaps */}
-        <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '18px' }}>
-          <h3 style={{ margin: '0 0 14px', fontSize: '14px', fontWeight: 600, color: '#0F172A' }}>
+        <div className="bg-white border border-slate-200/85 rounded-2xl p-5 shadow-3xs">
+          <h3 className="m-0 mb-3.5 text-xs font-bold text-slate-700 tracking-wider uppercase">
             Infrastructure Gaps
           </h3>
           {gaps.length === 0 ? (
-            <div style={{ color: '#94A3B8', fontSize: '13px' }}>No infrastructure gaps data available.</div>
+            <div className="text-slate-400 text-xs font-bold py-2">No infrastructure gaps data available.</div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div className="flex flex-col gap-2">
               {gaps.map((gap, i) => {
-                const sev = SEVERITY_STYLES[gap.severity] || SEVERITY_STYLES.Low;
+                const sevClass = SEVERITY_STYLES[gap.severity] || SEVERITY_STYLES.Low;
                 return (
                   <div
                     key={i}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '8px 10px',
-                      backgroundColor: '#F8F9FA',
-                      borderRadius: '6px',
-                      border: '1px solid #F1F5F9',
-                    }}
+                    className="flex items-center justify-between p-3.5 bg-slate-50/50 rounded-xl border border-slate-100 hover:bg-slate-50 transition-colors"
                   >
-                    <span style={{ fontSize: '13px', color: '#0F172A' }}>{gap.name}</span>
-                    <Badge label={gap.severity} style={{ backgroundColor: sev.bg, color: sev.color, border: `1px solid ${sev.border}` }} />
+                    <span className="text-xs font-bold text-slate-705">{gap.name}</span>
+                    <Badge label={gap.severity} className={sevClass} />
                   </div>
                 );
               })}
@@ -225,85 +201,52 @@ function SuggestionsTab({ constituency }) {
     }
   };
 
-  const selectStyle = {
-    padding: '7px 10px',
-    border: '1px solid #E2E8F0',
-    borderRadius: '7px',
-    fontSize: '13px',
-    fontFamily: 'inherit',
-    color: '#0F172A',
-    backgroundColor: '#FFFFFF',
-    cursor: 'pointer',
-    outline: 'none',
-  };
+  const inputClass = "px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs text-slate-650 focus:outline-none focus:ring-2 focus:ring-brand-blue/20 cursor-pointer font-semibold";
 
   return (
     <div>
       {/* Filters */}
-      <div
-        style={{
-          backgroundColor: '#FFFFFF',
-          border: '1px solid #E2E8F0',
-          borderRadius: '10px',
-          padding: '14px 16px',
-          marginBottom: '16px',
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '10px',
-          alignItems: 'center',
-        }}
-      >
-        <Filter size={14} color="#64748B" />
+      <div className="bg-white border border-slate-200/80 rounded-2xl p-3.5 mb-4 flex flex-wrap gap-2.5 items-center shadow-3xs">
+        <Filter size={14} className="text-slate-400" />
         <input
           type="text"
           placeholder="Search suggestions..."
           value={filters.search}
           onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-          style={{ ...selectStyle, minWidth: '180px', flex: 1 }}
-          onFocus={(e) => e.target.style.borderColor = '#2563EB'}
-          onBlur={(e) => e.target.style.borderColor = '#E2E8F0'}
+          className={`${inputClass} min-w-[180px] flex-1`}
         />
-        <select value={filters.category} onChange={(e) => setFilters({ ...filters, category: e.target.value })} style={selectStyle}>
+        <select value={filters.category} onChange={(e) => setFilters({ ...filters, category: e.target.value })} className={inputClass}>
           {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
         </select>
-        <select value={filters.status} onChange={(e) => setFilters({ ...filters, status: e.target.value })} style={selectStyle}>
+        <select value={filters.status} onChange={(e) => setFilters({ ...filters, status: e.target.value })} className={inputClass}>
           {STATUSES.map((s) => <option key={s}>{s}</option>)}
         </select>
-        <select value={filters.sentiment} onChange={(e) => setFilters({ ...filters, sentiment: e.target.value })} style={selectStyle}>
+        <select value={filters.sentiment} onChange={(e) => setFilters({ ...filters, sentiment: e.target.value })} className={inputClass}>
           {SENTIMENTS.map((s) => <option key={s}>{s}</option>)}
         </select>
         <button
           onClick={fetchSuggestions}
-          style={{ ...selectStyle, display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', border: '1px solid #E2E8F0' }}
+          className={`${inputClass} flex items-center gap-1.5 hover:bg-slate-50`}
         >
           <RefreshCw size={13} /> Refresh
         </button>
       </div>
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '40px', color: '#64748B' }}>
-          <Loader size={24} style={{ animation: 'spin 1s linear infinite', display: 'block', margin: '0 auto 10px' }} />
+        <div className="text-center py-10 text-slate-450 font-bold flex flex-col items-center gap-2">
+          <Loader size={20} className="animate-spin text-brand-blue" />
           Loading suggestions...
         </div>
       ) : suggestions.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '48px', backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '10px', color: '#64748B' }}>
+        <div className="text-center py-12 bg-white border border-slate-200 rounded-2xl text-slate-450 font-bold shadow-3xs">
           No suggestions found for the selected filters.
         </div>
       ) : (
-        <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '10px', overflow: 'hidden' }}>
+        <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-3xs">
           {/* Table header */}
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 1fr',
-              padding: '10px 16px',
-              borderBottom: '1px solid #E2E8F0',
-              backgroundColor: '#F8F9FA',
-              gap: '12px',
-            }}
-          >
+          <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr] p-3 px-4 border-b border-slate-200 bg-slate-50/50 gap-3 items-center">
             {['Title', 'Category', 'Constituency', 'Sentiment', 'Status', 'Date'].map((h) => (
-              <div key={h} style={{ fontSize: '12px', fontWeight: 600, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{h}</div>
+              <div key={h} className="text-[10px] font-bold text-slate-450 tracking-wider uppercase">{h}</div>
             ))}
           </div>
 
@@ -311,92 +254,68 @@ function SuggestionsTab({ constituency }) {
           {suggestions.map((s) => {
             const sid = s.id || s._id;
             const isExpanded = expandedId === sid;
-            const statusStyle = STATUS_STYLES[s.status] || STATUS_STYLES.Pending;
-            const sentStyle = s.sentiment === 'Negative' ? { bg: '#FEF2F2', color: '#DC2626', border: '#FECACA' }
-              : s.sentiment === 'Positive' ? { bg: '#F0FDF4', color: '#16A34A', border: '#BBF7D0' }
-              : { bg: '#F8F9FA', color: '#64748B', border: '#E2E8F0' };
+            const statusClass = STATUS_STYLES[s.status] || STATUS_STYLES.Pending;
+            const sentClass = s.sentiment === 'Negative' ? 'bg-rose-50 text-rose-700 border-rose-100'
+              : s.sentiment === 'Positive' ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+              : 'bg-slate-50 text-slate-500 border-slate-200';
 
             return (
               <div key={sid}>
                 <div
                   onClick={() => setExpandedId(isExpanded ? null : sid)}
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 1fr',
-                    padding: '12px 16px',
-                    borderBottom: '1px solid #F1F5F9',
-                    gap: '12px',
-                    cursor: 'pointer',
-                    alignItems: 'center',
-                    backgroundColor: isExpanded ? '#F8F9FA' : '#FFFFFF',
-                    transition: 'background 0.1s ease',
-                  }}
-                  onMouseEnter={(e) => { if (!isExpanded) e.currentTarget.style.backgroundColor = '#FAFAFA'; }}
-                  onMouseLeave={(e) => { if (!isExpanded) e.currentTarget.style.backgroundColor = '#FFFFFF'; }}
+                  className={`grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr] p-3.5 px-4 border-b border-slate-100 gap-3 items-center cursor-pointer transition-colors duration-150 ${
+                    isExpanded ? 'bg-slate-50/60' : 'bg-white hover:bg-slate-50/15'
+                  }`}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
-                    {isExpanded ? <ChevronDown size={14} color="#64748B" /> : <ChevronRight size={14} color="#94A3B8" />}
-                    <span style={{ fontSize: '13px', fontWeight: 500, color: '#0F172A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div className="flex items-center gap-2 min-w-0">
+                    {isExpanded ? <ChevronDown size={14} className="text-slate-500 flex-shrink-0" /> : <ChevronRight size={14} className="text-slate-400 flex-shrink-0" />}
+                    <span className="text-xs font-bold text-slate-800 overflow-hidden text-overflow-ellipsis whiteSpace-nowrap">
                       {s.title}
                     </span>
                   </div>
-                  <div><Badge label={s.category || 'Other'} style={{ backgroundColor: '#F1F5F9', color: '#475569', border: '1px solid #E2E8F0' }} /></div>
-                  <div style={{ fontSize: '12px', color: '#475569', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.constituency || '—'}</div>
-                  <div><Badge label={s.sentiment || '—'} style={{ backgroundColor: sentStyle.bg, color: sentStyle.color, border: `1px solid ${sentStyle.border}` }} /></div>
+                  <div>
+                    <Badge label={s.category || 'Other'} className="bg-slate-50 text-slate-600 border-slate-200" />
+                  </div>
+                  <div className="text-xs text-slate-600 font-semibold overflow-hidden text-overflow-ellipsis whiteSpace-nowrap">
+                    {s.constituency || '—'}
+                  </div>
+                  <div>
+                    <Badge label={s.sentiment || '—'} className={sentClass} />
+                  </div>
                   <div onClick={(e) => e.stopPropagation()}>
                     <select
                       value={s.status || 'Pending'}
                       onChange={(e) => updateStatus(sid, e.target.value)}
                       disabled={updatingId === sid}
-                      style={{
-                        padding: '4px 6px',
-                        border: `1px solid ${statusStyle.border}`,
-                        borderRadius: '5px',
-                        fontSize: '12px',
-                        fontFamily: 'inherit',
-                        backgroundColor: statusStyle.bg,
-                        color: statusStyle.color,
-                        cursor: 'pointer',
-                        outline: 'none',
-                        width: '100%',
-                      }}
+                      className={`px-2 py-1 rounded border text-xs font-bold focus:outline-none focus:ring-2 focus:ring-brand-blue/20 cursor-pointer w-full shadow-3xs ${statusClass}`}
                     >
                       {STATUSES.filter((st) => st !== 'All').map((st) => <option key={st}>{st}</option>)}
                     </select>
                   </div>
-                  <div style={{ fontSize: '12px', color: '#64748B' }}>
+                  <div className="text-xs text-slate-450 font-semibold">
                     {s.created_at ? new Date(s.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : '—'}
                   </div>
                 </div>
 
                 {/* Expanded row */}
                 {isExpanded && (
-                  <div
-                    style={{
-                      padding: '14px 20px 14px 40px',
-                      backgroundColor: '#F8F9FA',
-                      borderBottom: '1px solid #E2E8F0',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '10px',
-                    }}
-                  >
+                  <div className="p-4 px-10 bg-slate-50/50 border-b border-slate-200 flex flex-col gap-3">
                     <div>
-                      <div style={{ fontSize: '11px', fontWeight: 600, color: '#64748B', textTransform: 'uppercase', marginBottom: '4px' }}>Description</div>
-                      <p style={{ margin: 0, fontSize: '13px', color: '#475569', lineHeight: '1.6' }}>{s.description || 'No description.'}</p>
+                      <div className="text-[9px] font-bold text-slate-400 tracking-wider uppercase mb-1">Description</div>
+                      <p className="margin-0 text-xs text-slate-650 leading-relaxed font-semibold">{s.description || 'No description.'}</p>
                     </div>
                     {s.translated_text && (
                       <div>
-                        <div style={{ fontSize: '11px', fontWeight: 600, color: '#64748B', textTransform: 'uppercase', marginBottom: '4px' }}>Translated Text</div>
-                        <p style={{ margin: 0, fontSize: '13px', color: '#475569' }}>{s.translated_text}</p>
+                        <div className="text-[9px] font-bold text-slate-400 tracking-wider uppercase mb-1">Translated Text</div>
+                        <p className="margin-0 text-xs text-slate-600 font-semibold">{s.translated_text}</p>
                       </div>
                     )}
                     {s.ai_tags?.length > 0 && (
                       <div>
-                        <div style={{ fontSize: '11px', fontWeight: 600, color: '#64748B', textTransform: 'uppercase', marginBottom: '6px' }}>AI Tags</div>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                        <div className="text-[9px] font-bold text-slate-400 tracking-wider uppercase mb-1.5">AI Tags</div>
+                        <div className="flex flex-wrap gap-1">
                           {s.ai_tags.map((tag, i) => (
-                            <span key={i} style={{ fontSize: '12px', padding: '2px 8px', borderRadius: '4px', backgroundColor: '#FFFFFF', color: '#475569', border: '1px solid #E2E8F0' }}>
+                            <span key={i} className="text-[10px] font-bold px-2 py-0.5 rounded bg-white text-slate-600 border border-slate-200 shadow-3xs">
                               {tag}
                             </span>
                           ))}
@@ -404,7 +323,7 @@ function SuggestionsTab({ constituency }) {
                       </div>
                     )}
                     {s.name && (
-                      <div style={{ fontSize: '12px', color: '#94A3B8' }}>Submitted by: {s.name}</div>
+                      <div className="text-[10px] text-slate-400 font-semibold">Submitted by: {s.name}</div>
                     )}
                   </div>
                 )}
@@ -465,85 +384,61 @@ function RecommendationsTab({ constituency }) {
     return '#16A34A';
   };
 
+  const inputClass = "px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs text-slate-650 focus:outline-none focus:ring-2 focus:ring-brand-blue/20 cursor-pointer font-semibold";
+
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px', flexWrap: 'wrap' }}>
+      <div className="flex items-center gap-3 mb-4 flex-wrap">
         <select
           value={selectedConstituency}
           onChange={(e) => setSelectedConstituency(e.target.value)}
-          style={{ padding: '8px 12px', border: '1px solid #E2E8F0', borderRadius: '7px', fontSize: '13px', fontFamily: 'inherit', backgroundColor: '#FFFFFF', cursor: 'pointer', outline: 'none' }}
+          className={inputClass}
         >
           {CONSTITUENCIES.map((c) => <option key={c}>{c}</option>)}
         </select>
         <button
           onClick={generateRecommendations}
           disabled={generating}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '9px 18px',
-            border: 'none',
-            borderRadius: '7px',
-            background: generating ? '#93C5FD' : '#2563EB',
-            color: '#FFFFFF',
-            fontWeight: 600,
-            fontSize: '13px',
-            cursor: generating ? 'not-allowed' : 'pointer',
-            fontFamily: 'inherit',
-          }}
+          className={`flex items-center gap-1.5 px-4.5 py-1.8 rounded-lg text-xs font-bold transition-all shadow-3xs cursor-pointer ${
+            generating
+              ? 'bg-blue-300 text-white cursor-not-allowed'
+              : 'bg-brand-blue hover:bg-brand-blue/90 text-white hover:shadow-2xs'
+          }`}
         >
           {generating ? (
-            <><Loader size={15} style={{ animation: 'spin 1s linear infinite' }} /> Generating...</>
+            <><Loader size={14} className="animate-spin" /> Generating...</>
           ) : (
-            <><Star size={15} /> Generate AI Recommendations</>
+            <><Star size={14} /> Generate AI Recommendations</>
           )}
         </button>
       </div>
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '40px', color: '#64748B' }}>
-          <Loader size={24} style={{ animation: 'spin 1s linear infinite', display: 'block', margin: '0 auto 10px' }} />
+        <div className="text-center py-10 text-slate-450 font-bold flex flex-col items-center gap-2">
+          <Loader size={20} className="animate-spin text-brand-blue" />
           Loading recommendations...
         </div>
       ) : recommendations.length === 0 ? (
-        <div
-          style={{
-            textAlign: 'center',
-            padding: '48px',
-            backgroundColor: '#FFFFFF',
-            border: '1px solid #E2E8F0',
-            borderRadius: '10px',
-          }}
-        >
-          <Star size={32} color="#CBD5E1" style={{ display: 'block', margin: '0 auto 12px' }} />
-          <p style={{ margin: 0, fontWeight: 600, color: '#0F172A', fontSize: '15px' }}>No recommendations yet</p>
-          <p style={{ margin: '6px 0 0', color: '#64748B', fontSize: '13px' }}>
+        <div className="text-center py-12 bg-white border border-slate-200 rounded-2xl p-6 shadow-3xs max-w-lg mx-auto">
+          <Star size={32} className="text-slate-300 mx-auto mb-3" />
+          <h4 className="m-0 font-bold text-slate-800 text-sm">No recommendations yet</h4>
+          <p className="m-0 mt-1.5 text-xs text-slate-450 leading-relaxed font-semibold">
             Click "Generate AI Recommendations" to analyze citizen suggestions and produce actionable priorities.
           </p>
         </div>
       ) : (
-        <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '10px', overflow: 'hidden' }}>
+        <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-3xs">
           {/* Header */}
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '40px 2fr 1fr 80px 120px 80px 1fr 100px',
-              padding: '10px 16px',
-              borderBottom: '1px solid #E2E8F0',
-              backgroundColor: '#F8F9FA',
-              gap: '10px',
-            }}
-          >
+          <div className="grid grid-cols-[40px_2fr_1fr_80px_120px_80px_1fr_100px] p-3 px-4 border-b border-slate-200 bg-slate-50/50 gap-2.5 items-center">
             {['#', 'Title', 'Category', 'Score', 'Est. Cost', 'Support', 'Status', 'Actions'].map((h) => (
-              <div key={h} style={{ fontSize: '11px', fontWeight: 600, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{h}</div>
+              <div key={h} className="text-[10px] font-bold text-slate-450 tracking-wider uppercase">{h}</div>
             ))}
           </div>
 
           {recommendations.map((r, idx) => {
             const rid = r.id || r._id || idx;
             const isExpanded = expandedId === rid;
-            const statusStyle = STATUS_STYLES[r.status] || STATUS_STYLES.Pending;
+            const statusClass = STATUS_STYLES[r.status] || STATUS_STYLES.Pending;
 
             // Defensively parse JSON columns if returned as strings
             const citizenSignal = typeof r.citizen_signal === 'string' ? JSON.parse(r.citizen_signal) : r.citizen_signal;
@@ -559,51 +454,34 @@ function RecommendationsTab({ constituency }) {
             return (
               <div key={rid}>
                 <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: '40px 2fr 1fr 80px 120px 80px 1fr 100px',
-                    padding: '12px 16px',
-                    borderBottom: '1px solid #F1F5F9',
-                    gap: '10px',
-                    alignItems: 'center',
-                    backgroundColor: isExpanded ? '#F8F9FA' : '#FFFFFF',
-                  }}
+                  className={`grid grid-cols-[40px_2fr_1fr_80px_120px_80px_1fr_100px] p-3.5 px-4 border-b border-slate-100 gap-2.5 items-center cursor-pointer transition-colors duration-150 ${
+                    isExpanded ? 'bg-slate-50/60' : 'bg-white hover:bg-slate-50/15'
+                  }`}
+                  onClick={() => setExpandedId(isExpanded ? null : rid)}
                 >
-                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#94A3B8' }}>#{idx + 1}</div>
-                  <div
-                    style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', minWidth: 0 }}
-                    onClick={() => setExpandedId(isExpanded ? null : rid)}
-                  >
-                    {isExpanded ? <ChevronDown size={14} color="#64748B" /> : <ChevronRight size={14} color="#94A3B8" />}
-                    <span style={{ fontSize: '13px', fontWeight: 500, color: '#0F172A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div className="text-xs font-bold text-slate-400">#{idx + 1}</div>
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    {isExpanded ? <ChevronDown size={14} className="text-slate-500 flex-shrink-0" /> : <ChevronRight size={14} className="text-slate-400 flex-shrink-0" />}
+                    <span className="text-xs font-bold text-slate-800 overflow-hidden text-overflow-ellipsis whiteSpace-nowrap">
                       {r.title}
                     </span>
                   </div>
-                  <div><Badge label={r.category || 'General'} style={{ backgroundColor: '#F1F5F9', color: '#475569', border: '1px solid #E2E8F0' }} /></div>
                   <div>
-                    <span style={{ fontSize: '14px', fontWeight: 700, color: priorityColor(r.priority_score) }}>
+                    <Badge label={r.category || 'General'} className="bg-slate-50 text-slate-600 border-slate-200" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-extrabold" style={{ color: priorityColor(r.priority_score) }}>
                       {r.priority_score ?? '—'}
                     </span>
                   </div>
-                  <div style={{ fontSize: '13px', color: '#475569' }}>{formattedCost}</div>
-                  <div style={{ fontSize: '13px', color: '#475569' }}>{supportCount}</div>
-                  <div>
+                  <div className="text-xs text-slate-600 font-bold">{formattedCost}</div>
+                  <div className="text-xs text-slate-600 font-semibold">{supportCount}</div>
+                  <div onClick={(e) => e.stopPropagation()}>
                     <select
                       value={r.status || 'Pending'}
                       onChange={(e) => updateStatus(rid, e.target.value)}
                       disabled={updatingId === rid}
-                      style={{
-                        padding: '4px 6px',
-                        border: `1px solid ${statusStyle.border}`,
-                        borderRadius: '5px',
-                        fontSize: '12px',
-                        fontFamily: 'inherit',
-                        backgroundColor: statusStyle.bg,
-                        color: statusStyle.color,
-                        cursor: 'pointer',
-                        outline: 'none',
-                        width: '100%',
-                      }}
+                      className={`px-2 py-1 rounded border text-xs font-bold focus:outline-none focus:ring-2 focus:ring-brand-blue/20 cursor-pointer w-full shadow-3xs ${statusClass}`}
                     >
                       {STATUSES.filter((s) => s !== 'All').map((s) => <option key={s}>{s}</option>)}
                     </select>
@@ -611,7 +489,7 @@ function RecommendationsTab({ constituency }) {
                   <div>
                     <button
                       onClick={() => setExpandedId(isExpanded ? null : rid)}
-                      style={{ fontSize: '12px', color: '#2563EB', border: 'none', background: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}
+                      className="text-xs font-bold text-brand-blue hover:text-brand-blue/80 hover:underline cursor-pointer border-none bg-none p-0"
                     >
                       {isExpanded ? 'Hide' : 'Details'}
                     </button>
@@ -619,132 +497,107 @@ function RecommendationsTab({ constituency }) {
                 </div>
 
                 {isExpanded && (
-                  <div style={{ padding: '20px 24px 20px 56px', backgroundColor: '#F8FAFC', borderBottom: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    
-                    {/* Rationale header */}
+                  <div className="p-5 px-12 bg-slate-50/50 border-b border-slate-200 flex flex-col gap-4">
+                    {/* Rationale */}
                     {r.rationale && (
                       <div>
-                        <div style={{ fontSize: '11px', fontWeight: 600, color: '#64748B', textTransform: 'uppercase', marginBottom: '4px' }}>Recommendation Rationale</div>
-                        <p style={{ margin: 0, fontSize: '13px', color: '#475569', lineHeight: '1.6' }}>{r.rationale}</p>
+                        <div className="text-[9px] font-bold text-slate-400 tracking-wider uppercase mb-1">Recommendation Rationale</div>
+                        <p className="margin-0 text-xs text-slate-650 leading-relaxed font-semibold">{r.rationale}</p>
                       </div>
                     )}
 
                     {/* Scorecard grid */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                      
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {/* Citizen Signal (40% Weight) */}
-                      <div style={{ padding: '16px', backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '8px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                          <span style={{ fontSize: '13px', fontWeight: 700, color: '#0F172A' }}>Civic Urgency Signal</span>
-                          <span style={{ fontSize: '11px', fontWeight: 600, color: '#475569', backgroundColor: '#F1F5F9', padding: '2px 8px', borderRadius: '4px' }}>
+                      <div className="p-4 bg-white border border-slate-200 rounded-xl shadow-3xs">
+                        <div className="flex justify-between items-center mb-3">
+                          <span className="text-xs font-bold text-slate-805">Civic Urgency Signal</span>
+                          <span className="text-[9px] font-bold text-slate-500 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded shadow-3xs">
                             Weight: 40%
                           </span>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                          <span style={{ fontSize: '24px', fontWeight: 800, color: '#2563EB' }}>
+                        <div className="flex items-center gap-3.5 mb-3">
+                          <span className="text-2xl font-extrabold text-brand-blue leading-none">
                             {citizenSignal?.score ?? r.priority_score ?? 0}
                           </span>
-                          <span style={{ fontSize: '12px', color: '#64748B', lineHeight: '1.4' }}>
+                          <span className="text-[11px] text-slate-500 leading-normal font-semibold">
                             {citizenSignal?.detail || 'Citizen feedback and urgency statistics.'}
                           </span>
                         </div>
                         
                         {citizenSignal && (
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 10px', fontSize: '12px', borderTop: '1px dashed #E2E8F0', paddingTop: '10px' }}>
-                            <div><span style={{ color: '#64748B' }}>Citizen Reports:</span> <strong style={{ color: '#0F172A' }}>{citizenSignal.complaint_count ?? supportCount}</strong></div>
-                            <div><span style={{ color: '#64748B' }}>Avg Severity:</span> <strong style={{ color: '#0F172A' }}>{citizenSignal.avg_severity ?? '3.0'}/5.0</strong></div>
-                            <div><span style={{ color: '#64748B' }}>Unique Citizens:</span> <strong style={{ color: '#0F172A' }}>{citizenSignal.unique_submitters ?? 1}</strong></div>
-                            <div><span style={{ color: '#64748B' }}>Outstanding Time:</span> <strong style={{ color: '#0F172A' }}>{citizenSignal.days_ago ?? 30} days</strong></div>
+                          <div className="grid grid-cols-2 gap-2 text-xs font-semibold border-t border-dashed border-slate-100 pt-3">
+                            <div><span className="color text-slate-450">Citizen Reports:</span> <strong className="text-slate-800">{citizenSignal.complaint_count ?? supportCount}</strong></div>
+                            <div><span className="color text-slate-450">Avg Severity:</span> <strong className="text-slate-800">{citizenSignal.avg_severity ?? '3.0'}/5.0</strong></div>
+                            <div><span className="color text-slate-450">Unique Citizens:</span> <strong className="text-slate-800">{citizenSignal.unique_submitters ?? 1}</strong></div>
+                            <div><span className="color text-slate-450">Outstanding Time:</span> <strong className="text-slate-800">{citizenSignal.days_ago ?? 30} days</strong></div>
                           </div>
                         )}
                       </div>
 
                       {/* Structural Deficit (60% Weight) */}
-                      <div style={{ padding: '16px', backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '8px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                          <span style={{ fontSize: '13px', fontWeight: 700, color: '#0F172A' }}>Structural Gaps Deficit</span>
-                          <span style={{ fontSize: '11px', fontWeight: 600, color: '#475569', backgroundColor: '#F1F5F9', padding: '2px 8px', borderRadius: '4px' }}>
+                      <div className="p-4 bg-white border border-slate-200 rounded-xl shadow-3xs">
+                        <div className="flex justify-between items-center mb-3">
+                          <span className="text-xs font-bold text-slate-805">Structural Gaps Deficit</span>
+                          <span className="text-[9px] font-bold text-slate-500 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded shadow-3xs">
                             Weight: 60%
                           </span>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                          <span style={{ fontSize: '24px', fontWeight: 800, color: '#16A34A' }}>
+                        <div className="flex items-center gap-3.5 mb-3">
+                          <span className="text-2xl font-extrabold text-emerald-600 leading-none">
                             {structuralSignal?.score ?? r.priority_score ?? 0}
                           </span>
-                          <span style={{ fontSize: '12px', color: '#64748B', lineHeight: '1.4' }}>
+                          <span className="text-[11px] text-slate-500 leading-normal font-semibold">
                             {structuralSignal?.detail || 'Constituency gap assessment metrics.'}
                           </span>
                         </div>
                         
                         {structuralSignal && (
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 10px', fontSize: '12px', borderTop: '1px dashed #E2E8F0', paddingTop: '10px' }}>
-                            <div style={{ gridColumn: 'span 2', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              <span style={{ color: '#64748B' }}>Target Location:</span> <strong style={{ color: '#0F172A' }}>{structuralSignal.target_facility || 'Constituency Gaps'}</strong>
+                          <div className="grid grid-cols-2 gap-2 text-xs font-semibold border-t border-dashed border-slate-100 pt-3">
+                            <div className="col-span-2 truncate">
+                              <span className="color text-slate-450">Target Location:</span> <strong className="text-slate-800">{structuralSignal.target_facility || 'Constituency Gaps'}</strong>
                             </div>
                             
                             {r.category === 'Education' && (
                               <>
-                                <div><span style={{ color: '#64748B' }}>Enrollment Ratio:</span> <strong style={{ color: '#0F172A' }}>{Math.round((structuralSignal.enrollment_capacity_ratio || 0) * 100)}%</strong></div>
-                                <div><span style={{ color: '#64748B' }}>Distance to Alt:</span> <strong style={{ color: '#0F172A' }}>{structuralSignal.distance_to_nearest_alt_school_km || '—'} km</strong></div>
+                                <div><span className="color text-slate-450">Enrollment Ratio:</span> <strong className="text-slate-800">{Math.round((structuralSignal.enrollment_capacity_ratio || 0) * 100)}%</strong></div>
+                                <div><span className="color text-slate-450">Distance to Alt:</span> <strong className="text-slate-800">{structuralSignal.distance_to_nearest_alt_school_km || '—'} km</strong></div>
                               </>
                             )}
                             {r.category === 'Roads' && (
                               <>
-                                <div><span style={{ color: '#64748B' }}>Accidents (12m):</span> <strong style={{ color: '#0F172A' }}>{structuralSignal.accident_count_12m || 0}</strong></div>
-                                <div><span style={{ color: '#64748B' }}>Traffic Index:</span> <strong style={{ color: '#0F172A' }}>{structuralSignal.traffic_volume_index || '0'}/10</strong></div>
-                                <div><span style={{ color: '#64748B' }}>Linked Wards:</span> <strong style={{ color: '#0F172A' }}>{structuralSignal.connects_wards_count || 1}</strong></div>
+                                <div><span className="color text-slate-450">Accidents (12m):</span> <strong className="text-slate-800">{structuralSignal.accident_count_12m || 0}</strong></div>
+                                <div><span className="color text-slate-450">Traffic Index:</span> <strong className="text-slate-800">{structuralSignal.traffic_volume_index || '0'}/10</strong></div>
+                                <div><span className="color text-slate-450">Linked Wards:</span> <strong className="text-slate-800">{structuralSignal.connects_wards_count || 1}</strong></div>
                               </>
                             )}
                             {r.category === 'Other' && (
                               <>
-                                <div><span style={{ color: '#64748B' }}>Unemployment:</span> <strong style={{ color: '#0F172A' }}>{structuralSignal.youth_unemployment_rate_pct || 0}%</strong></div>
-                                <div><span style={{ color: '#64748B' }}>Nearest Hub:</span> <strong style={{ color: '#0F172A' }}>{structuralSignal.nearest_vocational_centre_distance_km || '—'} km</strong></div>
-                                <div><span style={{ color: '#64748B' }}>Industry Demand:</span> <strong style={{ color: '#0F172A' }}>{structuralSignal.local_industry_demand_index || '0'}/10</strong></div>
+                                <div><span className="color text-slate-450">Unemployment:</span> <strong className="text-slate-800">{structuralSignal.youth_unemployment_rate_pct || 0}%</strong></div>
+                                <div><span className="color text-slate-450">Nearest Hub:</span> <strong className="text-slate-800">{structuralSignal.nearest_vocational_centre_distance_km || '—'} km</strong></div>
+                                <div><span className="color text-slate-450">Industry Demand:</span> <strong className="text-slate-800">{structuralSignal.local_industry_demand_index || '0'}/10</strong></div>
                               </>
                             )}
                             {!['Education', 'Roads', 'Other'].includes(r.category) && (
                               <>
-                                <div><span style={{ color: '#64748B' }}>Severity Rating:</span> <strong style={{ color: '#0F172A' }}>{structuralSignal.max_severity || 50}/100</strong></div>
-                                <div><span style={{ color: '#64748B' }}>Local Gaps Count:</span> <strong style={{ color: '#0F172A' }}>{structuralSignal.matching_gaps_count || 0}</strong></div>
+                                <div><span className="color text-slate-450">Severity Rating:</span> <strong className="text-slate-800">{structuralSignal.max_severity || 50}/100</strong></div>
+                                <div><span className="color text-slate-450">Local Gaps Count:</span> <strong className="text-slate-800">{structuralSignal.matching_gaps_count || 0}</strong></div>
                               </>
                             )}
                           </div>
                         )}
                       </div>
-
                     </div>
 
                     {/* AI Comparative Note */}
                     {scoreBreakdown?.comparison_note && (
-                      <div style={{
-                        padding: '12px 16px',
-                        backgroundColor: '#F0F9FF',
-                        border: '1.5px solid #BAE6FD',
-                        borderRadius: '8px',
-                        fontSize: '13px',
-                        color: '#0369A1',
-                        display: 'flex',
-                        alignItems: 'flex-start',
-                        gap: '10px',
-                        lineHeight: '1.5',
-                        marginTop: '4px'
-                      }}>
-                        <span style={{ 
-                          fontWeight: 700, 
-                          textTransform: 'uppercase', 
-                          fontSize: '10px', 
-                          backgroundColor: '#E0F2FE', 
-                          padding: '2px 6px', 
-                          borderRadius: '4px', 
-                          display: 'inline-block', 
-                          marginTop: '2px' 
-                        }}>
+                      <div className="p-3.5 bg-sky-50/50 border-1.5 border-sky-200/60 rounded-xl text-xs text-sky-850 flex items-start gap-2.5 leading-relaxed font-semibold mt-1">
+                        <span className="text-[9px] font-bold text-sky-700 bg-sky-100 px-2 py-0.5 rounded shadow-3xs uppercase flex-shrink-0 mt-0.5">
                           AI Contrast
                         </span>
-                        <span style={{ flex: 1 }}>{scoreBreakdown.comparison_note}</span>
+                        <span className="flex-1">{scoreBreakdown.comparison_note}</span>
                       </div>
                     )}
-
                   </div>
                 )}
               </div>
@@ -772,8 +625,8 @@ function AnalyticsTab({ constituency }) {
 
   if (loading) {
     return (
-      <div style={{ textAlign: 'center', padding: '40px', color: '#64748B' }}>
-        <Loader size={24} style={{ animation: 'spin 1s linear infinite', display: 'block', margin: '0 auto 10px' }} />
+      <div className="text-center py-12 text-slate-450 font-bold flex flex-col items-center gap-2">
+        <Loader size={20} className="animate-spin text-brand-blue" />
         Loading analytics...
       </div>
     );
@@ -785,7 +638,7 @@ function AnalyticsTab({ constituency }) {
   const statusData = data?.by_status || [];
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <AnalyticsChart
         type="bar"
         data={categoryData}
@@ -857,47 +710,41 @@ function SettingsTab() {
   };
 
   return (
-    <div style={{ maxWidth: '600px' }}>
-      <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '20px' }}>
-        <h3 style={{ margin: '0 0 6px', fontSize: '15px', fontWeight: 600, color: '#0F172A' }}>
+    <div className="max-w-xl">
+      <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-3xs">
+        <h3 className="m-0 mb-1.5 text-xs font-bold text-slate-700 tracking-wider uppercase">
           AI Model Selection
         </h3>
-        <p style={{ margin: '0 0 16px', fontSize: '13px', color: '#64748B' }}>
+        <p className="m-0 mb-4.5 text-xs text-slate-450 font-semibold leading-relaxed">
           Choose the AI model used for analyzing suggestions and generating recommendations.
         </p>
 
         {loading ? (
-          <div style={{ color: '#64748B', fontSize: '13px' }}>Loading available models...</div>
+          <div className="text-slate-400 text-xs font-bold">Loading available models...</div>
         ) : models.length === 0 ? (
-          <div style={{ color: '#94A3B8', fontSize: '13px' }}>No models available.</div>
+          <div className="text-slate-400 text-xs font-bold">No models available.</div>
         ) : (
           <>
             {/* Current active badge */}
             {activeModel && (
-              <div style={{ marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '12px', color: '#64748B' }}>Currently active:</span>
-                <span style={{ fontSize: '12px', fontWeight: 600, padding: '3px 10px', borderRadius: '5px', backgroundColor: '#F0FDF4', color: '#16A34A', border: '1px solid #BBF7D0' }}>
+              <div className="mb-3.5 flex items-center gap-2 text-xs font-semibold">
+                <span className="text-slate-450">Currently active:</span>
+                <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full border bg-emerald-50 text-emerald-700 border-emerald-100 shadow-3xs tracking-wide">
                   {models.find((m) => m.id === activeModel)?.name || activeModel}
                 </span>
               </div>
             )}
 
             {/* Model list */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
+            <div className="flex flex-col gap-2 mb-4">
               {models.map((model) => (
                 <label
                   key={model.id}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: '10px',
-                    padding: '12px 14px',
-                    border: `1px solid ${selectedModel === model.id ? '#2563EB' : '#E2E8F0'}`,
-                    borderRadius: '8px',
-                    backgroundColor: selectedModel === model.id ? '#EFF6FF' : '#FFFFFF',
-                    cursor: 'pointer',
-                    transition: 'all 0.1s ease',
-                  }}
+                  className={`flex items-start gap-3 p-3.5 border rounded-xl cursor-pointer transition-all ${
+                    selectedModel === model.id 
+                      ? 'border-brand-blue bg-soft-blue/20 shadow-3xs' 
+                      : 'border-slate-200 bg-white hover:bg-slate-50/30'
+                  }`}
                 >
                   <input
                     type="radio"
@@ -905,19 +752,19 @@ function SettingsTab() {
                     value={model.id}
                     checked={selectedModel === model.id}
                     onChange={() => setSelectedModel(model.id)}
-                    style={{ marginTop: '2px', accentColor: '#2563EB' }}
+                    className="mt-0.5 accent-brand-blue"
                   />
                   <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontSize: '14px', fontWeight: 600, color: '#0F172A' }}>{model.name}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-extrabold text-slate-800">{model.name}</span>
                       {model.id === activeModel && (
-                        <span style={{ fontSize: '11px', fontWeight: 600, padding: '1px 6px', borderRadius: '4px', backgroundColor: '#F0FDF4', color: '#16A34A', border: '1px solid #BBF7D0' }}>
+                        <span className="text-[9px] font-bold px-1.5 py-0.2 bg-emerald-55 text-emerald-700 border border-emerald-100 rounded">
                           Active
                         </span>
                       )}
                     </div>
                     {model.description && (
-                      <div style={{ fontSize: '12px', color: '#64748B', marginTop: '2px' }}>{model.description}</div>
+                      <div className="text-[11px] text-slate-500 font-medium leading-relaxed mt-1">{model.description}</div>
                     )}
                   </div>
                 </label>
@@ -927,22 +774,19 @@ function SettingsTab() {
             <button
               onClick={saveModel}
               disabled={saving || selectedModel === activeModel}
-              style={{
-                padding: '9px 20px',
-                border: 'none',
-                borderRadius: '7px',
-                background: saving || selectedModel === activeModel ? '#E2E8F0' : '#2563EB',
-                color: saving || selectedModel === activeModel ? '#94A3B8' : '#FFFFFF',
-                fontWeight: 600,
-                fontSize: '13px',
-                cursor: saving || selectedModel === activeModel ? 'not-allowed' : 'pointer',
-                fontFamily: 'inherit',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-              }}
+              className={`flex items-center justify-center gap-1.5 px-4.5 py-1.8 rounded-lg text-xs font-bold transition-all shadow-3xs cursor-pointer ${
+                saving || selectedModel === activeModel
+                  ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed'
+                  : 'bg-brand-blue hover:bg-brand-blue/90 text-white hover:shadow-2xs'
+              }`}
             >
-              {saving ? <><Loader size={14} style={{ animation: 'spin 1s linear infinite' }} /> Saving...</> : saved ? '✓ Saved!' : 'Save Model'}
+              {saving ? (
+                <><Loader size={14} className="animate-spin" /> Saving...</>
+              ) : saved ? (
+                '✓ Saved!'
+              ) : (
+                'Save Model'
+              )}
             </button>
           </>
         )}
@@ -956,36 +800,24 @@ export default function MPDashboard({ constituency: propConstituency }) {
   const [activeTab, setActiveTab] = useState('Overview');
   const [constituency, setConstituency] = useState(propConstituency || CONSTITUENCIES[0]);
 
-  const tabButtonStyle = (tab) => ({
-    padding: '8px 16px',
-    border: 'none',
-    borderBottom: `2px solid ${activeTab === tab ? '#2563EB' : 'transparent'}`,
-    backgroundColor: 'transparent',
-    color: activeTab === tab ? '#2563EB' : '#64748B',
-    fontWeight: activeTab === tab ? 600 : 500,
-    fontSize: '14px',
-    cursor: 'pointer',
-    fontFamily: 'inherit',
-    transition: 'all 0.15s ease',
-    whiteSpace: 'nowrap',
-  });
+  const inputClass = "px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs text-slate-655 focus:outline-none focus:ring-2 focus:ring-brand-blue/20 cursor-pointer font-semibold";
 
   return (
-    <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '24px 20px' }}>
+    <div className="max-w-7xl mx-auto px-5 py-6">
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+      <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
         <div>
-          <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#0F172A' }}>MP Dashboard</h1>
-          <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#64748B' }}>
+          <h1 className="m-0 text-xl font-bold text-slate-800">MP Dashboard</h1>
+          <p className="m-0 mt-1 text-xs text-slate-450 font-semibold">
             Manage constituency development priorities
           </p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <span style={{ fontSize: '13px', color: '#64748B' }}>Constituency:</span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-slate-450 font-bold">Constituency:</span>
           <select
             value={constituency}
             onChange={(e) => setConstituency(e.target.value)}
-            style={{ padding: '8px 12px', border: '1px solid #E2E8F0', borderRadius: '7px', fontSize: '13px', fontFamily: 'inherit', backgroundColor: '#FFFFFF', cursor: 'pointer', outline: 'none' }}
+            className={inputClass}
           >
             {CONSTITUENCIES.map((c) => <option key={c}>{c}</option>)}
           </select>
@@ -993,22 +825,23 @@ export default function MPDashboard({ constituency: propConstituency }) {
       </div>
 
       {/* Tabs */}
-      <div
-        style={{
-          display: 'flex',
-          borderBottom: '1px solid #E2E8F0',
-          marginBottom: '20px',
-          overflowX: 'auto',
-          backgroundColor: '#FFFFFF',
-          borderRadius: '10px 10px 0 0',
-          padding: '0 8px',
-        }}
-      >
-        {TABS.map((tab) => (
-          <button key={tab} onClick={() => setActiveTab(tab)} style={tabButtonStyle(tab)}>
-            {tab}
-          </button>
-        ))}
+      <div className="flex border-b border-slate-200 mb-5 overflow-x-auto bg-white rounded-t-2xl px-2 shadow-3xs">
+        {TABS.map((tab) => {
+          const active = activeTab === tab;
+          return (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-4 py-2 border-b-2 bg-transparent text-xs font-bold cursor-pointer transition-all whitespace-nowrap outline-none ${
+                active 
+                  ? 'border-brand-blue text-brand-blue font-extrabold' 
+                  : 'border-transparent text-slate-450 hover:text-slate-600'
+              }`}
+            >
+              {tab}
+            </button>
+          );
+        })}
       </div>
 
       {/* Tab content */}
@@ -1019,8 +852,6 @@ export default function MPDashboard({ constituency: propConstituency }) {
         {activeTab === 'Analytics' && <AnalyticsTab constituency={constituency} />}
         {activeTab === 'Settings' && <SettingsTab />}
       </div>
-
-      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }

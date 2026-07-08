@@ -1,129 +1,198 @@
-import { ArrowRight, Mic, BarChart3, Users, Shield, TrendingUp, Globe } from 'lucide-react';
+import { Mic, BarChart2, Newspaper, MapPin, Send, LayoutDashboard } from 'lucide-react';
 
-/**
- * LandingPage — hero & features overview
- * Props: { onNavigate, constituency }
- */
 export default function LandingPage({ onNavigate, constituency }) {
   const features = [
     {
       icon: Mic,
-      title: 'Voice-First Submissions',
-      description: 'Speak in any of 12 Indian languages. AI transcribes, categorizes, and routes your concern automatically.',
+      title: 'Voice Input',
+      description: 'Submit suggestions in your language using voice. Supports 12 Indian languages including Hindi, Tamil, Telugu, and more.',
+      color: '#2563EB',
     },
     {
-      icon: BarChart3,
-      title: 'Demand-Ranked Priorities',
-      description: 'Proposals ranked by a transparent 40/60 citizen-signal + structural-need formula.',
+      icon: BarChart2,
+      title: 'AI Analysis',
+      description: 'Every submission is automatically categorized, analyzed for sentiment, and tagged — giving MPs actionable insights.',
+      color: '#16A34A',
     },
     {
-      icon: Users,
-      title: 'MP Command Center',
-      description: 'Real-time analytics, gap analysis, and AI-powered budget recommendations for elected officials.',
-    },
-    {
-      icon: Shield,
-      title: 'Transparent Governance',
-      description: 'Every ranking is explainable. Citizens see exactly why one proposal outranks another.',
+      icon: Newspaper,
+      title: 'Constituency News',
+      description: 'Stay updated with local news. AI-powered filtering surfaces the stories that matter most to your area.',
+      color: '#D97706',
     },
   ];
 
   return (
-    <div className="min-h-[calc(100vh-3.5rem)]">
-      {/* Hero Section */}
-      <section className="relative bg-gradient-to-b from-[#BFDDF0]/20 via-[#FFF9D2]/10 to-transparent pt-24 pb-20 px-6 text-center overflow-hidden">
-        {/* Subtle decorative elements */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-[radial-gradient(ellipse_at_center,rgba(140,192,235,0.08)_0%,transparent_70%)] pointer-events-none" />
+    <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '60px 20px 40px' }}>
+      {/* Hero */}
+      <div style={{ textAlign: 'center', marginBottom: '56px' }}>
+        <div
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '5px 14px',
+            border: '1px solid #E2E8F0',
+            borderRadius: '20px',
+            backgroundColor: '#F8F9FA',
+            fontSize: '12px',
+            fontWeight: 600,
+            color: '#64748B',
+            marginBottom: '24px',
+            textTransform: 'uppercase',
+            letterSpacing: '0.06em',
+          }}
+        >
+          <MapPin size={12} /> AI Constituency Development Platform
+        </div>
 
-        <div className="relative max-w-3xl mx-auto">
-          <h1 className="text-5xl md:text-6xl font-bold tracking-tight text-slate-800 leading-[1.1] mb-6">
-            Empowering{' '}
-            <span className="bg-gradient-to-r from-[#5BA3D9] to-[#8CC0EB] bg-clip-text text-transparent">
-              Every Voice
-            </span>
-          </h1>
+        <h1
+          style={{
+            fontSize: 'clamp(32px, 6vw, 56px)',
+            fontWeight: 700,
+            color: '#0F172A',
+            margin: '0 0 16px',
+            lineHeight: 1.15,
+            letterSpacing: '-0.02em',
+          }}
+        >
+          People's Priorities
+        </h1>
 
-          <p className="text-lg text-slate-500 leading-relaxed max-w-xl mx-auto mb-10">
-            A modern, transparent platform bridging the gap between complex governance and the everyday citizen. Participate, propose, and prioritize what matters most to your community.
-          </p>
+        <p
+          style={{
+            fontSize: 'clamp(16px, 2.5vw, 20px)',
+            color: '#475569',
+            maxWidth: '560px',
+            margin: '0 auto 32px',
+            lineHeight: '1.6',
+          }}
+        >
+          Bridge the gap between citizens and their representatives.
+          Submit concerns, track development, and hold accountability — powered by AI.
+        </p>
 
-          <div className="flex items-center justify-center gap-4 flex-wrap">
-            <button
-              onClick={() => onNavigate('citizen')}
-              className="inline-flex items-center gap-2 px-7 py-3.5 bg-[#8CC0EB] text-white font-semibold text-[15px] rounded-xl border-none cursor-pointer font-[inherit] hover:bg-[#5BA3D9] hover:shadow-lg hover:shadow-[#8CC0EB]/20 transition-all duration-300 group"
-            >
-              Get Started
-              <ArrowRight size={16} className="transition-transform duration-300 group-hover:translate-x-1" />
-            </button>
-            <button
-              onClick={() => onNavigate('proposals')}
-              className="inline-flex items-center gap-2 px-7 py-3.5 bg-white text-slate-700 font-semibold text-[15px] rounded-xl border border-slate-200 cursor-pointer font-[inherit] hover:border-[#BFDDF0] hover:shadow-sm transition-all duration-300"
-            >
-              Learn More
-            </button>
+        {constituency && (
+          <div style={{ fontSize: '13px', color: '#64748B', marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
+            <MapPin size={13} color="#2563EB" />
+            Detected: <strong style={{ color: '#0F172A' }}>{constituency}</strong>
           </div>
-        </div>
-      </section>
+        )}
 
-      {/* Stats Strip */}
-      <section className="max-w-4xl mx-auto px-6 -mt-2 mb-16">
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-8 grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-slate-100">
-          {[
-            { value: '15k+', label: 'PROPOSALS' },
-            { value: '4.2M', label: 'CITIZENS' },
-            { value: '89%', label: 'RESOLUTION RATE' },
-          ].map((stat) => (
-            <div key={stat.label} className="flex flex-col items-center justify-center py-4 md:py-0">
-              <span className="text-3xl font-bold text-[#5BA3D9] tracking-tight">{stat.value}</span>
-              <span className="text-xs font-semibold text-slate-400 tracking-widest mt-1">{stat.label}</span>
-            </div>
-          ))}
+        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+          <button
+            onClick={() => onNavigate('citizen')}
+            style={{
+              padding: '12px 28px',
+              border: 'none',
+              borderRadius: '9px',
+              background: '#2563EB',
+              color: '#FFFFFF',
+              fontWeight: 600,
+              fontSize: '15px',
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.background = '#1D4ED8'}
+            onMouseLeave={(e) => e.currentTarget.style.background = '#2563EB'}
+          >
+            <Send size={16} /> Submit a Suggestion
+          </button>
+          <button
+            onClick={() => onNavigate('mp-dashboard')}
+            style={{
+              padding: '12px 28px',
+              border: '1px solid #E2E8F0',
+              borderRadius: '9px',
+              background: '#FFFFFF',
+              color: '#0F172A',
+              fontWeight: 600,
+              fontSize: '15px',
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#CBD5E1'; e.currentTarget.style.background = '#F8F9FA'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#E2E8F0'; e.currentTarget.style.background = '#FFFFFF'; }}
+          >
+            <LayoutDashboard size={16} /> MP Dashboard
+          </button>
         </div>
-      </section>
+      </div>
 
-      {/* Features Section */}
-      <section className="max-w-5xl mx-auto px-6 pb-24">
-        <div className="text-center mb-14">
-          <h2 className="text-2xl font-bold text-slate-800 tracking-tight mb-3">
-            How JanSujhav Works
-          </h2>
-          <p className="text-slate-500 text-[15px] max-w-lg mx-auto">
-            Designed to make democratic participation intuitive and accessible for everyone.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {features.map((feature) => (
+      {/* Feature cards */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+          gap: '16px',
+        }}
+      >
+        {features.map(({ icon: Icon, title, description, color }) => (
+          <div
+            key={title}
+            style={{
+              backgroundColor: '#FFFFFF',
+              border: '1px solid #E2E8F0',
+              borderRadius: '12px',
+              padding: '24px',
+              transition: 'border-color 0.15s ease',
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.borderColor = '#CBD5E1'}
+            onMouseLeave={(e) => e.currentTarget.style.borderColor = '#E2E8F0'}
+          >
             <div
-              key={feature.title}
-              className="group bg-white rounded-xl border border-slate-100 p-7 hover:border-[#BFDDF0] hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 cursor-default"
+              style={{
+                width: '44px',
+                height: '44px',
+                borderRadius: '10px',
+                backgroundColor: `${color}12`,
+                border: `1px solid ${color}25`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: '16px',
+              }}
             >
-              <div className="w-11 h-11 rounded-xl bg-[#BFDDF0]/25 flex items-center justify-center mb-5">
-                <feature.icon size={20} className="text-[#5BA3D9]" />
-              </div>
-              <h3 className="text-base font-semibold text-slate-800 mb-2">{feature.title}</h3>
-              <p className="text-sm text-slate-500 leading-relaxed">{feature.description}</p>
+              <Icon size={22} color={color} />
             </div>
-          ))}
-        </div>
-      </section>
+            <h3 style={{ margin: '0 0 8px', fontSize: '16px', fontWeight: 600, color: '#0F172A' }}>{title}</h3>
+            <p style={{ margin: 0, fontSize: '14px', color: '#475569', lineHeight: '1.6' }}>{description}</p>
+          </div>
+        ))}
+      </div>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-100 py-8 px-6">
-        <div className="max-w-5xl mx-auto flex items-center justify-between flex-wrap gap-4">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-bold text-[#5BA3D9]">JanSujhav</span>
-            <span className="text-xs text-slate-400">© 2026 JanSujhav. Towards Transparent Governance.</span>
+      {/* Stats strip */}
+      <div
+        style={{
+          marginTop: '48px',
+          padding: '24px 32px',
+          backgroundColor: '#FFFFFF',
+          border: '1px solid #E2E8F0',
+          borderRadius: '12px',
+          display: 'flex',
+          justifyContent: 'space-around',
+          flexWrap: 'wrap',
+          gap: '20px',
+        }}
+      >
+        {[
+          { value: '12', label: 'Languages Supported' },
+          { value: '543', label: 'Constituencies' },
+          { value: 'AI', label: 'Powered Analysis' },
+          { value: '100%', label: 'Open & Transparent' },
+        ].map(({ value, label }) => (
+          <div key={label} style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '28px', fontWeight: 700, color: '#0F172A', lineHeight: 1 }}>{value}</div>
+            <div style={{ fontSize: '13px', color: '#64748B', marginTop: '4px' }}>{label}</div>
           </div>
-          <div className="flex items-center gap-6">
-            {['Privacy Policy', 'Terms of Service', 'Accessibility', 'Contact Us'].map((link) => (
-              <button key={link} className="text-xs text-slate-400 hover:text-slate-600 transition-colors border-none bg-transparent cursor-pointer font-[inherit]">
-                {link}
-              </button>
-            ))}
-          </div>
-        </div>
-      </footer>
+        ))}
+      </div>
     </div>
   );
 }

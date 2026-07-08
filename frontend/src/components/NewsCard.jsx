@@ -1,19 +1,19 @@
-import { ExternalLink, Tag, ArrowRight } from 'lucide-react';
+import { ExternalLink, Tag } from 'lucide-react';
 
 const CATEGORY_COLORS = {
-  Politics: { bg: 'bg-[#BFDDF0]/20', text: 'text-[#3B8BC7]', border: 'border-[#BFDDF0]' },
-  Infrastructure: { bg: 'bg-[#FFEBCC]/40', text: 'text-amber-700', border: 'border-[#FFEBCC]' },
-  Health: { bg: 'bg-red-50', text: 'text-red-600', border: 'border-red-200' },
-  Education: { bg: 'bg-[#BFDDF0]/20', text: 'text-[#3B8BC7]', border: 'border-[#BFDDF0]' },
-  Economy: { bg: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-emerald-200' },
-  Environment: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200' },
-  General: { bg: 'bg-slate-50', text: 'text-slate-500', border: 'border-slate-200' },
+  Politics: { bg: 'bg-indigo-50/70', text: 'text-indigo-700', border: 'border-indigo-200/60' },
+  Infrastructure: { bg: 'bg-amber-50/70', text: 'text-amber-700', border: 'border-amber-200/60' },
+  Health: { bg: 'bg-rose-50/70', text: 'text-rose-700', border: 'border-rose-200/60' },
+  Education: { bg: 'bg-sky-50/70', text: 'text-sky-700', border: 'border-sky-200/60' },
+  Economy: { bg: 'bg-emerald-50/70', text: 'text-emerald-700', border: 'border-emerald-200/60' },
+  Environment: { bg: 'bg-teal-50/70', text: 'text-teal-700', border: 'border-teal-200/60' },
+  General: { bg: 'bg-slate-50', text: 'text-slate-600', border: 'border-slate-200' },
 };
 
 const SENTIMENT_STYLES = {
-  Positive: { bg: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-emerald-200', label: 'Positive' },
-  Negative: { bg: 'bg-red-50', text: 'text-red-600', border: 'border-red-200', label: 'Negative' },
-  Neutral: { bg: 'bg-slate-50', text: 'text-slate-500', border: 'border-slate-200', label: 'Neutral' },
+  Positive: { bg: 'bg-emerald-50/70', text: 'text-emerald-700', border: 'border-emerald-250', label: 'Positive' },
+  Negative: { bg: 'bg-rose-50/70', text: 'text-rose-750', border: 'border-rose-250', label: 'Negative' },
+  Neutral: { bg: 'bg-slate-50', text: 'text-slate-600', border: 'border-slate-200', label: 'Neutral' },
 };
 
 const CATEGORY_ICONS = {
@@ -62,62 +62,88 @@ export default function NewsCard({ article }) {
   const sentStyle = sentiment ? SENTIMENT_STYLES[sentiment] || SENTIMENT_STYLES.Neutral : null;
 
   return (
-    <div className="bg-white border border-slate-100 rounded-xl overflow-hidden flex flex-col transition-all duration-300 cursor-default hover:border-[#BFDDF0] hover:shadow-md hover:-translate-y-0.5 group">
+    <div className="bg-white border border-slate-200/75 rounded-2xl overflow-hidden flex flex-col transition-all hover:border-slate-350 hover:-translate-y-0.5 hover:shadow-xs cursor-default">
       {/* Image or category placeholder */}
       {image_url ? (
         <img
           src={image_url}
           alt={headline}
-          className="w-full h-44 object-cover bg-slate-50"
+          className="w-full h-40 object-cover border-b border-slate-200/60 bg-slate-50"
           onError={(e) => {
             e.target.style.display = 'none';
-            if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex';
+            e.target.nextSibling.style.display = 'flex';
           }}
         />
       ) : null}
       {/* Fallback placeholder */}
       <div
-        className={`${image_url ? 'hidden' : 'flex'} items-center justify-center h-32 bg-slate-50 text-4xl`}
+        className="items-center justify-center h-28 bg-slate-50 border-b border-slate-200/60 text-3xl"
+        style={{ display: image_url ? 'none' : 'flex' }}
       >
         {CATEGORY_ICONS[category] || '📰'}
       </div>
 
       {/* Content */}
-      <div className="p-4 flex-1 flex flex-col gap-2.5">
+      <div className="p-4.5 flex-1 flex flex-col gap-3">
         {/* Badges */}
         <div className="flex gap-2 flex-wrap items-center">
-          <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-md border ${catStyle.bg} ${catStyle.text} ${catStyle.border} uppercase tracking-wide`}>
+          <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-md border tracking-wider uppercase shadow-3xs ${catStyle.bg} ${catStyle.text} ${catStyle.border}`}>
             {category}
           </span>
-          {published_at && (
-            <span className="text-[11px] text-slate-400 ml-auto">{timeAgo(published_at)}</span>
+          {sentStyle && (
+            <span className={`text-[10px] font-semibold px-2.5 py-0.5 rounded-md border shadow-3xs ${sentStyle.bg} ${sentStyle.text} ${sentStyle.border}`}>
+              {sentStyle.label}
+            </span>
           )}
         </div>
 
         {/* Headline */}
-        <h3 className="m-0 text-[15px] font-semibold text-slate-800 leading-snug line-clamp-2">
+        <h3 className="text-sm font-bold text-slate-800 leading-snug line-clamp-2">
           {headline || 'No headline'}
         </h3>
 
         {/* Summary */}
         {summary && (
-          <p className="m-0 text-sm text-slate-500 leading-relaxed line-clamp-3 flex-1">
+          <p className="text-xs text-slate-500 leading-relaxed line-clamp-3 flex-1 font-medium">
             {summary}
           </p>
         )}
 
-        {/* Footer: Read link */}
-        {source_url && (
-          <a
-            href={source_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-sm text-[#5BA3D9] no-underline font-medium mt-auto pt-2 hover:text-[#3B8BC7] transition-colors group/link"
-          >
-            Read Full Article
-            <ArrowRight size={14} className="transition-transform group-hover/link:translate-x-0.5" />
-          </a>
+        {/* AI Tags */}
+        {ai_tags.length > 0 && (
+          <div className="flex gap-1.5 flex-wrap items-center">
+            <Tag size={12} className="text-slate-400" />
+            {ai_tags.slice(0, 4).map((tag, i) => (
+              <span key={i} className="text-[10px] px-2 py-0.5 rounded bg-slate-50 text-slate-500 border border-slate-200 shadow-3xs font-medium">
+                #{tag}
+              </span>
+            ))}
+          </div>
         )}
+
+        {/* Footer */}
+        <div className="flex items-center justify-between pt-3 border-t border-slate-100 mt-1">
+          <div>
+            {source_name && (
+              <span className="text-xs text-slate-450 font-bold">{source_name}</span>
+            )}
+            {published_at && (
+              <span className="text-[10px] text-slate-400 font-semibold ml-2">
+                {timeAgo(published_at)}
+              </span>
+            )}
+          </div>
+          {source_url && (
+            <a
+              href={source_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-xs text-brand-blue font-bold hover:underline whitespace-nowrap"
+            >
+              Read article <ExternalLink size={11} />
+            </a>
+          )}
+        </div>
       </div>
     </div>
   );

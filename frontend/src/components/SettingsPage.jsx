@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { CheckCircle, Loader, User, Lock, Eye, EyeOff, Globe, MapPin, Search, ChevronDown } from 'lucide-react';
+import { CheckCircle, Loader, User, Lock, Eye, EyeOff, Globe, MapPin, Search, LogOut } from 'lucide-react';
 import { get, put } from '../utils/api.js';
 import ALL_CONSTITUENCIES from '../utils/constituencies.json';
 
@@ -38,7 +38,7 @@ export default function SettingsPage({ user, onLogout, onUpdateUser }) {
       .then((res) => {
         if (res.success && res.data?.user) {
           const freshUser = res.data.user;
-          onUpdateUser(freshUser);
+          if (onUpdateUser) onUpdateUser(freshUser);
           setName(freshUser.name || '');
           setConstituency(freshUser.constituency || '');
           setSearchQuery(freshUser.constituency || '');
@@ -67,7 +67,7 @@ export default function SettingsPage({ user, onLogout, onUpdateUser }) {
     { code: 'pa-IN', label: 'ਪੰਜਾਬੀ (Punjabi)' },
     { code: 'ml-IN', label: 'മലയാളം (Malayalam)' },
     { code: 'or-IN', label: 'ଓଡ଼ିଆ (Oriya)' },
-    { code: 'ur-IN', label: 'اردو (Urdu)' }
+    { code: 'ur-IN', label: 'اردו (Urdu)' }
   ];
 
   const filteredConstituencies = ALL_CONSTITUENCIES.filter((c) =>
@@ -83,7 +83,7 @@ export default function SettingsPage({ user, onLogout, onUpdateUser }) {
     try {
       const res = await put('/api/auth/me/profile', { name });
       if (res.success && res.data?.user) {
-        onUpdateUser(res.data.user);
+        if (onUpdateUser) onUpdateUser(res.data.user);
         setProfileSuccess(true);
         setTimeout(() => setProfileSuccess(false), 3000);
       } else {
@@ -105,7 +105,7 @@ export default function SettingsPage({ user, onLogout, onUpdateUser }) {
     try {
       const res = await put('/api/auth/me/constituency', { constituency });
       if (res.success && res.data?.user) {
-        onUpdateUser(res.data.user);
+        if (onUpdateUser) onUpdateUser(res.data.user);
         setConstSuccess(true);
         setTimeout(() => setConstSuccess(false), 3000);
       } else {
@@ -152,246 +152,292 @@ export default function SettingsPage({ user, onLogout, onUpdateUser }) {
     setTimeout(() => setLangSuccess(false), 2000);
   };
 
-  const inputClasses = "w-full px-3.5 py-2.5 border border-slate-200 rounded-lg text-sm font-[inherit] text-slate-800 bg-white transition-all duration-200 hover:border-slate-300";
-  const labelClasses = "block text-xs font-semibold text-slate-500 mb-1.5";
-
   return (
-    <div className="max-w-xl mx-auto py-10 px-5">
-      <div className="flex items-center gap-2.5 mb-7">
-        <User size={20} className="text-[#5BA3D9]" />
-        <h1 className="text-xl font-bold text-slate-800 m-0">Account Settings</h1>
-      </div>
-
-      {/* Profile settings */}
-      <div className="bg-white border border-slate-100 rounded-xl p-5 mb-5">
-        <div className="flex items-center gap-2 mb-3">
-          <User size={15} className="text-slate-400" />
-          <h3 className="m-0 text-sm font-semibold text-slate-800">Profile Details</h3>
+    <div className="max-w-xl mx-auto py-10 px-6">
+      <div className="flex items-center gap-2.5 mb-8">
+        <div className="w-9 h-9 rounded-lg bg-soft-blue/30 flex items-center justify-center text-slate-800">
+          <User size={20} className="text-slate-800" />
         </div>
-        <form onSubmit={handleSaveProfile} className="flex flex-col gap-3.5">
-          <div>
-            <label className={labelClasses}>Name</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className={inputClasses}
-            />
-          </div>
-          <div>
-            <label className={labelClasses}>Email (Read-only)</label>
-            <input type="text" value={user?.email || ''} className={`${inputClasses} bg-slate-50 text-slate-400 cursor-not-allowed`} disabled />
-          </div>
-          <div>
-            <label className={labelClasses}>Role</label>
-            <input type="text" value={user?.role?.toUpperCase() || ''} className={`${inputClasses} bg-slate-50 text-slate-400 cursor-not-allowed`} disabled />
-          </div>
-          {profileSuccess && (
-            <div className="text-xs text-emerald-600 flex items-center gap-1.5">
-              <CheckCircle size={14} /> Name updated successfully!
-            </div>
-          )}
-          {profileError && <div className="text-xs text-red-500">{profileError}</div>}
-          <button
-            type="submit"
-            disabled={profileLoading}
-            className={`mt-1 px-4 py-2.5 border-none rounded-lg text-sm font-semibold cursor-pointer font-[inherit] flex items-center gap-1.5 transition-all duration-200
-              ${profileLoading ? 'bg-[#BFDDF0] text-white cursor-not-allowed' : 'bg-[#8CC0EB] text-white hover:bg-[#5BA3D9]'}`}
-          >
-            {profileLoading ? <Loader size={14} className="animate-spin-slow" /> : 'Save Profile'}
-          </button>
-        </form>
+        <h1 className="text-xl font-bold text-slate-900 tracking-tight">Account Settings</h1>
       </div>
 
-      {/* Constituency setting */}
-      <div className="bg-white border border-slate-100 rounded-xl p-5 mb-5">
-        <div className="flex items-center gap-2 mb-3">
-          <MapPin size={15} className="text-slate-400" />
-          <h3 className="m-0 text-sm font-semibold text-slate-800">Constituency Selection</h3>
-        </div>
-        <form onSubmit={handleSaveConstituency} className="flex flex-col gap-3.5">
-          <div className="relative">
-            <label className={labelClasses}>Primary Constituency</label>
-            <input
-              type="text"
-              placeholder="Search constituency..."
-              value={searchQuery}
-              onChange={(e) => {
-                const val = e.target.value;
-                setSearchQuery(val);
-                setIsConstDropdownOpen(true);
-                const match = ALL_CONSTITUENCIES.find(c => c.toLowerCase() === val.toLowerCase().trim());
-                if (match) {
-                  setConstituency(match);
-                }
-              }}
-              onFocus={() => setIsConstDropdownOpen(true)}
-              onBlur={() => {
-                setTimeout(() => {
-                  setIsConstDropdownOpen(false);
-                  const match = ALL_CONSTITUENCIES.find(c => c.toLowerCase() === searchQuery.toLowerCase().trim());
-                  if (match) {
-                    setSearchQuery(match);
-                    setConstituency(match);
-                  } else {
-                    setSearchQuery(constituency || '');
-                  }
-                }, 250);
-              }}
-              className={inputClasses}
-            />
-            {isConstDropdownOpen && (
-              <div className="absolute top-full left-0 right-0 max-h-44 overflow-y-auto bg-white border border-slate-100 rounded-xl z-[100] mt-1 shadow-lg">
-                {filteredConstituencies.slice(0, 50).length === 0 ? (
-                  <div className="px-3 py-2 text-slate-400 text-sm">No matches found</div>
-                ) : (
-                  filteredConstituencies.slice(0, 50).map((c) => (
-                    <div
-                      key={c}
-                      onClick={() => {
-                        setSearchQuery(c);
-                        setConstituency(c);
-                        setIsConstDropdownOpen(false);
-                      }}
-                      className={`px-3 py-2 cursor-pointer text-sm border-b border-slate-50 transition-colors hover:bg-slate-50
-                        ${constituency === c ? 'text-[#3B8BC7] bg-[#BFDDF0]/10 font-semibold' : 'text-slate-600'}`}
-                    >
-                      {c}
-                    </div>
-                  ))
-                )}
-              </div>
-            )}
+      <div className="space-y-6">
+        {/* Profile details */}
+        <div className="bg-white border border-slate-200/80 rounded-xl p-6 shadow-xs transition-all">
+          <div className="flex items-center gap-2 mb-4 border-b border-slate-100 pb-3">
+            <User size={16} className="text-slate-500" />
+            <h3 className="text-sm font-semibold text-slate-855">Profile Details</h3>
           </div>
-          {constSuccess && (
-            <div className="text-xs text-emerald-600 flex items-center gap-1.5">
-              <CheckCircle size={14} /> Constituency updated successfully!
-            </div>
-          )}
-          {constError && <div className="text-xs text-red-500">{constError}</div>}
-          <button
-            type="submit"
-            disabled={constLoading}
-            className={`mt-1 px-4 py-2.5 border-none rounded-lg text-sm font-semibold cursor-pointer font-[inherit] flex items-center gap-1.5 transition-all duration-200
-              ${constLoading ? 'bg-[#BFDDF0] text-white cursor-not-allowed' : 'bg-[#8CC0EB] text-white hover:bg-[#5BA3D9]'}`}
-          >
-            {constLoading ? <Loader size={14} className="animate-spin-slow" /> : 'Save Constituency'}
-          </button>
-        </form>
-      </div>
-
-      {/* Voice language settings */}
-      <div className="bg-white border border-slate-100 rounded-xl p-5 mb-5">
-        <div className="flex items-center gap-2 mb-3">
-          <Globe size={15} className="text-slate-400" />
-          <h3 className="m-0 text-sm font-semibold text-slate-800">Voice & Language Preference</h3>
-        </div>
-        <form onSubmit={handleSaveLanguage} className="flex flex-col gap-3.5">
-          <div>
-            <label className={labelClasses}>Default Voice Input Language</label>
-            <select
-              value={voiceLang}
-              onChange={(e) => setVoiceLang(e.target.value)}
-              className={inputClasses}
-            >
-              {languages.map((lang) => (
-                <option key={lang.code} value={lang.code}>{lang.label}</option>
-              ))}
-            </select>
-            <p className="mt-1.5 text-xs text-slate-400">
-              This language will be pre-selected when submitting reports using voice dictation.
-            </p>
-          </div>
-          {langSuccess && (
-            <div className="text-xs text-emerald-600 flex items-center gap-1.5">
-              <CheckCircle size={14} /> Voice language preference saved!
-            </div>
-          )}
-          <button type="submit" className="mt-1 px-4 py-2.5 border-none rounded-lg text-sm font-semibold bg-[#8CC0EB] text-white cursor-pointer font-[inherit] hover:bg-[#5BA3D9] transition-all duration-200">
-            Save Preference
-          </button>
-        </form>
-      </div>
-
-      {/* Password settings */}
-      {user?.google_id ? null : (
-        <div className="bg-white border border-slate-100 rounded-xl p-5 mb-5">
-          <div className="flex items-center gap-2 mb-3">
-            <Lock size={15} className="text-slate-400" />
-            <h3 className="m-0 text-sm font-semibold text-slate-800">Change Password</h3>
-          </div>
-          <form onSubmit={handleSavePassword} className="flex flex-col gap-3.5">
-            <div className="relative">
-              <label className={labelClasses}>Current Password</label>
+          <form onSubmit={handleSaveProfile} className="space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1.5">Full Name</label>
               <input
-                type={showCurrent ? 'text' : 'password'}
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                className={inputClasses}
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 bg-white placeholder-slate-400 focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20 transition-all"
               />
-              <button
-                type="button"
-                onClick={() => setShowCurrent(!showCurrent)}
-                className="absolute right-3 top-7 bg-transparent border-none cursor-pointer text-slate-400 p-0 hover:text-slate-600 transition-colors"
-              >
-                {showCurrent ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
-            </div>
-            <div className="relative">
-              <label className={labelClasses}>New Password</label>
-              <input
-                type={showNew ? 'text' : 'password'}
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                className={inputClasses}
-              />
-              <button
-                type="button"
-                onClick={() => setShowNew(!showNew)}
-                className="absolute right-3 top-7 bg-transparent border-none cursor-pointer text-slate-400 p-0 hover:text-slate-600 transition-colors"
-              >
-                {showNew ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
             </div>
             <div>
-              <label className={labelClasses}>Confirm New Password</label>
-              <input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className={inputClasses}
+              <label className="block text-xs font-semibold text-slate-500 mb-1.5">Email Address (Read-only)</label>
+              <input 
+                type="text" 
+                value={user?.email || ''} 
+                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-400 bg-slate-50/50 cursor-not-allowed" 
+                disabled 
               />
             </div>
-            {passSuccess && (
-              <div className="text-xs text-emerald-600 flex items-center gap-1.5">
-                <CheckCircle size={14} /> Password updated successfully!
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1.5">Account Role</label>
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-soft-blue/25 text-slate-800 border border-soft-blue/50 capitalize">
+                {user?.role || 'Citizen'}
+              </span>
+            </div>
+            
+            {profileSuccess && (
+              <div className="flex items-center gap-1.5 text-xs text-emerald-600 font-semibold bg-emerald-50 border border-emerald-100 rounded-lg p-2.5">
+                <CheckCircle size={14} /> Profile name updated successfully!
               </div>
             )}
-            {passError && <div className="text-xs text-red-500">{passError}</div>}
-            <button
-              type="submit"
-              disabled={passLoading}
-              className={`mt-1 px-4 py-2.5 border-none rounded-lg text-sm font-semibold cursor-pointer font-[inherit] flex items-center gap-1.5 transition-all duration-200
-                ${passLoading ? 'bg-[#BFDDF0] text-white cursor-not-allowed' : 'bg-[#8CC0EB] text-white hover:bg-[#5BA3D9]'}`}
+            {profileError && (
+              <div className="text-xs text-rose-600 font-semibold bg-rose-50 border border-rose-100 rounded-lg p-2.5">
+                {profileError}
+              </div>
+            )}
+            
+            <button 
+              type="submit" 
+              disabled={profileLoading} 
+              className={`px-4 py-2 border border-transparent rounded-lg bg-brand-blue text-slate-900 font-semibold text-xs hover:bg-brand-blue/90 shadow-xs transition-all cursor-pointer flex items-center gap-1.5 ${
+                profileLoading ? 'opacity-70 cursor-not-allowed' : ''
+              }`}
             >
-              {passLoading ? <Loader size={14} className="animate-spin-slow" /> : 'Change Password'}
+              {profileLoading ? <Loader size={14} className="animate-spin" /> : 'Save Profile'}
             </button>
           </form>
         </div>
-      )}
 
-      {/* Sign Out Card */}
-      <div className="bg-red-50 border border-red-200 rounded-xl p-5 flex justify-between items-center">
-        <div>
-          <h4 className="m-0 text-sm font-semibold text-red-800">Session Control</h4>
-          <span className="text-xs text-red-600">Disconnect your account from this device.</span>
+        {/* Constituency setting */}
+        <div className="bg-white border border-slate-200/80 rounded-xl p-6 shadow-xs transition-all">
+          <div className="flex items-center gap-2 mb-4 border-b border-slate-100 pb-3">
+            <MapPin size={16} className="text-slate-500" />
+            <h3 className="text-sm font-semibold text-slate-855">Constituency Selection</h3>
+          </div>
+          <form onSubmit={handleSaveConstituency} className="space-y-4">
+            <div className="relative">
+              <label className="block text-xs font-semibold text-slate-500 mb-1.5">Primary Constituency</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search constituency..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setSearchQuery(val);
+                    setIsConstDropdownOpen(true);
+                    const match = ALL_CONSTITUENCIES.find(c => c.toLowerCase() === val.toLowerCase().trim());
+                    if (match) {
+                      setConstituency(match);
+                    }
+                  }}
+                  onFocus={() => setIsConstDropdownOpen(true)}
+                  onBlur={() => {
+                    setTimeout(() => {
+                      setIsConstDropdownOpen(false);
+                      const match = ALL_CONSTITUENCIES.find(c => c.toLowerCase() === searchQuery.toLowerCase().trim());
+                      if (match) {
+                        setSearchQuery(match);
+                        setConstituency(match);
+                      } else {
+                        setSearchQuery(constituency || '');
+                      }
+                    }, 250);
+                  }}
+                  className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 bg-white placeholder-slate-400 focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20 transition-all"
+                />
+                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              </div>
+              
+              {isConstDropdownOpen && (
+                <div className="absolute top-full left-0 right-0 max-h-48 overflow-y-auto bg-white border border-slate-200 rounded-lg z-50 mt-1 shadow-md">
+                  {filteredConstituencies.slice(0, 50).length === 0 ? (
+                    <div className="p-3 text-xs text-slate-400">No matches found</div>
+                  ) : (
+                    filteredConstituencies.slice(0, 50).map((c) => (
+                      <div
+                        key={c}
+                        onClick={() => {
+                          setSearchQuery(c);
+                          setConstituency(c);
+                          setIsConstDropdownOpen(false);
+                        }}
+                        className={`px-3.5 py-2 cursor-pointer text-xs transition-all hover:bg-slate-50 ${
+                          constituency === c ? 'text-slate-900 bg-soft-blue/20 font-bold' : 'text-slate-600'
+                        }`}
+                      >
+                        {c}
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+
+            {constSuccess && (
+              <div className="flex items-center gap-1.5 text-xs text-emerald-600 font-semibold bg-emerald-50 border border-emerald-100 rounded-lg p-2.5">
+                <CheckCircle size={14} /> Constituency updated successfully!
+              </div>
+            )}
+            {constError && (
+              <div className="text-xs text-rose-600 font-semibold bg-rose-50 border border-rose-100 rounded-lg p-2.5">
+                {constError}
+              </div>
+            )}
+
+            <button 
+              type="submit" 
+              disabled={constLoading} 
+              className={`px-4 py-2 border border-transparent rounded-lg bg-brand-blue text-slate-900 font-semibold text-xs hover:bg-brand-blue/90 shadow-xs transition-all cursor-pointer flex items-center gap-1.5 ${
+                constLoading ? 'opacity-70 cursor-not-allowed' : ''
+              }`}
+            >
+              {constLoading ? <Loader size={14} className="animate-spin" /> : 'Save Constituency'}
+            </button>
+          </form>
         </div>
-        <button
-          onClick={onLogout}
-          className="px-4 py-2 border border-red-500 rounded-lg bg-red-500 text-white text-sm font-semibold cursor-pointer font-[inherit] hover:bg-red-600 hover:border-red-600 transition-all duration-200"
-        >
-          Sign Out
-        </button>
+
+        {/* Voice language settings */}
+        <div className="bg-white border border-slate-200/80 rounded-xl p-6 shadow-xs transition-all">
+          <div className="flex items-center gap-2 mb-4 border-b border-slate-100 pb-3">
+            <Globe size={16} className="text-slate-500" />
+            <h3 className="text-sm font-semibold text-slate-855">Voice & Language Preference</h3>
+          </div>
+          <form onSubmit={handleSaveLanguage} className="space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1.5">Default Voice Input Language</label>
+              <select
+                value={voiceLang}
+                onChange={(e) => setVoiceLang(e.target.value)}
+                className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-855 bg-white focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20 transition-all"
+              >
+                {languages.map((lang) => (
+                  <option key={lang.code} value={lang.code}>{lang.label}</option>
+                ))}
+              </select>
+              <p className="text-[11px] text-slate-400 font-medium mt-1.5 leading-relaxed">
+                This language will be pre-selected when submitting reports using voice dictation.
+              </p>
+            </div>
+            
+            {langSuccess && (
+              <div className="flex items-center gap-1.5 text-xs text-emerald-600 font-semibold bg-emerald-50 border border-emerald-100 rounded-lg p-2.5">
+                <CheckCircle size={14} /> Voice language preference saved!
+              </div>
+            )}
+            
+            <button 
+              type="submit" 
+              className="px-4 py-2 border border-transparent rounded-lg bg-brand-blue text-slate-900 font-semibold text-xs hover:bg-brand-blue/90 shadow-xs transition-all cursor-pointer flex items-center"
+            >
+              Save Preference
+            </button>
+          </form>
+        </div>
+
+        {/* Password settings */}
+        {user?.google_id ? null : (
+          <div className="bg-white border border-slate-200/80 rounded-xl p-6 shadow-xs transition-all">
+            <div className="flex items-center gap-2 mb-4 border-b border-slate-100 pb-3">
+              <Lock size={16} className="text-slate-500" />
+              <h3 className="text-sm font-semibold text-slate-855">Change Password</h3>
+            </div>
+            <form onSubmit={handleSavePassword} className="space-y-4">
+              <div className="relative">
+                <label className="block text-xs font-semibold text-slate-500 mb-1.5">Current Password</label>
+                <div className="relative">
+                  <input
+                    type={showCurrent ? 'text' : 'password'}
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    className="w-full pl-3 pr-10 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 bg-white focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20 transition-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCurrent(!showCurrent)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-455 hover:text-slate-600 focus:outline-none cursor-pointer bg-transparent border-none p-0.5"
+                  >
+                    {showCurrent ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </div>
+              
+              <div className="relative">
+                <label className="block text-xs font-semibold text-slate-500 mb-1.5">New Password</label>
+                <div className="relative">
+                  <input
+                    type={showNew ? 'text' : 'password'}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="w-full pl-3 pr-10 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 bg-white focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20 transition-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNew(!showNew)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-455 hover:text-slate-600 focus:outline-none cursor-pointer bg-transparent border-none p-0.5"
+                  >
+                    {showNew ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 mb-1.5">Confirm New Password</label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 bg-white focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20 transition-all"
+                />
+              </div>
+
+              {passSuccess && (
+                <div className="flex items-center gap-1.5 text-xs text-emerald-600 font-semibold bg-emerald-50 border border-emerald-100 rounded-lg p-2.5">
+                  <CheckCircle size={14} /> Password updated successfully!
+                </div>
+              )}
+              {passError && (
+                <div className="text-xs text-rose-600 font-semibold bg-rose-50 border border-rose-100 rounded-lg p-2.5">
+                  {passError}
+                </div>
+              )}
+
+              <button 
+                type="submit" 
+                disabled={passLoading} 
+                className={`px-4 py-2 border border-transparent rounded-lg bg-brand-blue text-slate-900 font-semibold text-xs hover:bg-brand-blue/90 shadow-xs transition-all cursor-pointer flex items-center gap-1.5 ${
+                  passLoading ? 'opacity-70 cursor-not-allowed' : ''
+                }`}
+              >
+                {passLoading ? <Loader size={14} className="animate-spin" /> : 'Change Password'}
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* Sign Out Card */}
+        <div className="bg-rose-50/40 border border-rose-150 rounded-xl p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-3xs">
+          <div>
+            <h4 className="text-xs font-bold text-rose-800">Session Controls</h4>
+            <span className="text-[11px] text-rose-600 font-medium">Disconnect your account and sign out of this device.</span>
+          </div>
+          <button
+            onClick={onLogout}
+            className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 border-none shadow-3xs"
+          >
+            <LogOut size={13} />
+            Sign Out
+          </button>
+        </div>
       </div>
     </div>
   );

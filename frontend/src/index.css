@@ -1,14 +1,10 @@
 @import 'tailwindcss';
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 @theme {
-  /* Warm Pastel Design Tokens */
-  --color-sunshine: #FFF9D2;
-  --color-peach: #FFEBCC;
-  --color-skyblue: #BFDDF0;
-  --color-brand: #8CC0EB;
-  --color-brand-dark: #5BA3D9;
-  --color-brand-deeper: #3B8BC7;
+  --color-warm-sun: #FFF9D2;
+  --color-warm-peach: #FFEBCC;
+  --color-soft-blue: #BFDDF0;
+  --color-brand-blue: #8CC0EB;
 }
 
 * {
@@ -17,12 +13,11 @@
 
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background: linear-gradient(135deg, rgba(191,221,240,0.12) 0%, rgba(255,249,210,0.1) 40%, #F8FAFC 100%);
-  color: #1E293B;
+  background: linear-gradient(135deg, rgba(191, 221, 240, 0.2) 0%, rgba(255, 249, 210, 0.15) 50%, rgba(248, 250, 252, 0.5) 100%);
+  color: #1e293b; /* text-slate-800 */
   margin: 0;
-  min-height: 100vh;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
 }
 
 /* Scrollbar styling */
@@ -45,50 +40,5 @@ body {
   animation: pulse-ring 1s ease-out infinite;
 }
 
-/* Spin animation */
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-.animate-spin-slow {
-  animation: spin 1s linear infinite;
-}
-
-/* Fade-in animation */
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-@keyframes slideUp {
-  from { transform: translateY(12px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-
-/* Smooth focus ring for inputs */
-input:focus, select:focus, textarea:focus {
-  border-color: #8CC0EB !important;
-  box-shadow: 0 0 0 3px rgba(140, 192, 235, 0.15);
-  outline: none;
-}
-
-/* Custom pill styles */
-.pill-active {
-  background-color: rgba(191, 221, 240, 0.3);
-  border-color: #8CC0EB;
-  color: #1E293B;
-  font-weight: 600;
-}
-
-/* Line clamp utility */
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-.line-clamp-3 {
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
+/* Transitions */
+.transition-all { transition: all 0.15s ease; }

@@ -5,7 +5,7 @@ import { useState } from 'react';
  * Navbar — top navigation bar
  * Props: { user, onNavigate, onLogout, currentView }
  */
-export default function Navbar({ user, onNavigate, onLogout, currentView, constituency, onConstituencyChange, onDetectLocation }) {
+export default function Navbar({ user, onNavigate, onLogout, currentView }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const navLink = (view, label, Icon) => {
@@ -14,34 +14,11 @@ export default function Navbar({ user, onNavigate, onLogout, currentView, consti
       <button
         key={view}
         onClick={() => { onNavigate(view); setMenuOpen(false); }}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px',
-          padding: '6px 12px',
-          borderRadius: '6px',
-          border: 'none',
-          background: isActive ? '#EFF6FF' : 'transparent',
-          color: isActive ? '#2563EB' : '#475569',
-          fontWeight: isActive ? 600 : 500,
-          fontSize: '14px',
-          cursor: 'pointer',
-          fontFamily: 'inherit',
-          transition: 'all 0.15s ease',
-          textDecoration: 'none',
-        }}
-        onMouseEnter={(e) => {
-          if (!isActive) {
-            e.currentTarget.style.background = '#F8F9FA';
-            e.currentTarget.style.color = '#0F172A';
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (!isActive) {
-            e.currentTarget.style.background = 'transparent';
-            e.currentTarget.style.color = '#475569';
-          }
-        }}
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-all cursor-pointer border-none font-medium ${
+          isActive
+            ? 'bg-soft-blue/40 text-slate-900 font-semibold'
+            : 'bg-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+        }`}
       >
         <Icon size={15} />
         {label}
@@ -56,65 +33,22 @@ export default function Navbar({ user, onNavigate, onLogout, currentView, consti
   };
 
   return (
-    <nav
-      style={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 100,
-        backgroundColor: '#FFFFFF',
-        borderBottom: '1px solid #E2E8F0',
-        height: '56px',
-        display: 'flex',
-        alignItems: 'center',
-        padding: '0 24px',
-        gap: '16px',
-      }}
-    >
+    <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200/60 h-14 flex items-center justify-between px-6 gap-4">
       {/* Logo */}
       <button
-        onClick={() => onNavigate(user ? (user.role === 'mp' ? 'mp-dashboard' : 'citizen') : 'landing')}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          border: 'none',
-          background: 'none',
-          cursor: 'pointer',
-          padding: '4px',
-          borderRadius: '6px',
-          fontFamily: 'inherit',
-          flexShrink: 0,
-        }}
+        onClick={() => onNavigate('landing')}
+        className="flex items-center gap-2 border-none bg-transparent cursor-pointer p-1 rounded-md"
       >
-        <div
-          style={{
-            width: '28px',
-            height: '28px',
-            backgroundColor: '#2563EB',
-            borderRadius: '6px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-          }}
-        >
-          <MapPin size={15} color="#FFFFFF" />
+        <div className="w-7 h-7 bg-brand-blue rounded-md flex items-center justify-center flex-shrink-0">
+          <MapPin size={15} className="text-slate-900" />
         </div>
-        <span style={{ fontSize: '15px', fontWeight: 700, color: '#0F172A', whiteSpace: 'nowrap' }}>
-          People's Priorities
+        <span className="text-sm font-bold text-slate-900 whitespace-nowrap">
+          JanSujhav
         </span>
       </button>
 
       {/* Center nav links */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '4px',
-          flex: 1,
-          justifyContent: 'center',
-        }}
-      >
+      <div className="hidden md:flex items-center gap-1.5 flex-1 justify-center">
         {navLink('citizen', 'Submit', Send)}
         {navLink('news', 'News', Newspaper)}
         {navLink('proposals', 'Priorities', TrendingUp)}
@@ -122,153 +56,43 @@ export default function Navbar({ user, onNavigate, onLogout, currentView, consti
         {user?.role === 'mp' && navLink('mp-dashboard', 'Dashboard', LayoutDashboard)}
       </div>
 
-      {/* Right: auth + location autodetection */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
-        {/* Location Selector */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px',
-          padding: '4px 10px',
-          border: '1px solid #E2E8F0',
-          borderRadius: '8px',
-          backgroundColor: '#FFFFFF',
-          boxShadow: '0 1px 2px rgba(0,0,0,0.02)',
-        }}>
-          <MapPin size={14} color="#2563EB" />
-          <select
-            value={constituency || ''}
-            onChange={(e) => onConstituencyChange && onConstituencyChange(e.target.value)}
-            style={{
-              border: 'none',
-              backgroundColor: 'transparent',
-              fontSize: '13px',
-              fontWeight: 600,
-              color: '#0F172A',
-              outline: 'none',
-              cursor: 'pointer',
-              fontFamily: 'inherit',
-              paddingRight: '4px',
-            }}
-          >
-            <option value="" disabled>Select Location</option>
-            {['Varanasi', 'Lucknow', 'New Delhi', 'Mumbai North', 'Bengaluru Central', 'Pune', 'Nithari'].map(c => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-            {constituency && !['Varanasi', 'Lucknow', 'New Delhi', 'Mumbai North', 'Bengaluru Central', 'Pune', 'Nithari'].includes(constituency) && (
-              <option value={constituency}>{constituency}</option>
-            )}
-          </select>
-          <button
-            onClick={() => onDetectLocation && onDetectLocation()}
-            title="Autodetect location"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              border: 'none',
-              background: '#F1F5F9',
-              color: '#475569',
-              borderRadius: '4px',
-              width: '20px',
-              height: '20px',
-              cursor: 'pointer',
-              padding: 0,
-              transition: 'background-color 0.15s ease',
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#E2E8F0'}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#F1F5F9'}
-          >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10"/>
-              <circle cx="12" cy="12" r="3"/>
-              <line x1="12" y1="1" x2="12" y2="3"/>
-              <line x1="12" y1="21" x2="12" y2="23"/>
-              <line x1="1" y1="12" x2="3" y2="12"/>
-              <line x1="21" y1="12" x2="23" y2="12"/>
-            </svg>
-          </button>
-        </div>
-
+      {/* Right: auth */}
+      <div className="flex items-center gap-2 flex-shrink-0">
         {user ? (
-          <div style={{ position: 'relative' }}>
+          <div className="relative">
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                border: '1px solid #E2E8F0',
-                borderRadius: '8px',
-                padding: '6px 10px',
-                background: '#F8F9FA',
-                cursor: 'pointer',
-                fontFamily: 'inherit',
-              }}
+              className="flex items-center gap-2 border border-slate-200/80 rounded-lg px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100/70 transition-all cursor-pointer"
             >
-              <div
-                style={{
-                  width: '26px',
-                  height: '26px',
-                  borderRadius: '50%',
-                  backgroundColor: '#2563EB',
-                  color: '#FFFFFF',
-                  fontSize: '12px',
-                  fontWeight: 700,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}
-              >
+              <div className="w-6 h-6 rounded-full bg-brand-blue text-slate-900 text-xs font-bold flex items-center justify-center flex-shrink-0 overflow-hidden">
                 {user.picture ? (
                   <img
                     src={user.picture}
                     alt={getUserInitial()}
-                    style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
+                    className="w-full h-full rounded-full object-cover"
                   />
                 ) : (
                   getUserInitial()
                 )}
               </div>
-              <span style={{ fontSize: '13px', fontWeight: 500, color: '#0F172A', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <span className="text-xs font-semibold text-slate-800 max-w-[120px] truncate hidden sm:inline-block">
                 {user.name || user.email}
               </span>
-              <ChevronDown size={14} color="#64748B" />
+              <ChevronDown size={14} className="text-slate-500" />
             </button>
 
             {menuOpen && (
-              <div
-                style={{
-                  position: 'absolute',
-                  top: 'calc(100% + 6px)',
-                  right: 0,
-                  backgroundColor: '#FFFFFF',
-                  border: '1px solid #E2E8F0',
-                  borderRadius: '8px',
-                  minWidth: '180px',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.06)',
-                  zIndex: 200,
-                  overflow: 'hidden',
-                }}
-              >
-                <div style={{ padding: '12px 14px', borderBottom: '1px solid #E2E8F0' }}>
-                  <div style={{ fontSize: '13px', fontWeight: 600, color: '#0F172A' }}>{user.name || 'User'}</div>
-                  <div style={{ fontSize: '12px', color: '#64748B', marginTop: '2px' }}>{user.email}</div>
+              <div className="absolute right-0 top-full mt-1.5 bg-white border border-slate-200/80 rounded-lg min-w-[180px] shadow-md z-50 overflow-hidden">
+                <div className="p-3 border-b border-slate-100">
+                  <div className="text-xs font-bold text-slate-800">{user.name || 'User'}</div>
+                  <div className="text-[11px] text-slate-500 truncate mt-0.5">{user.email}</div>
                   {user.role && (
                     <span
-                      style={{
-                        display: 'inline-block',
-                        marginTop: '6px',
-                        fontSize: '11px',
-                        fontWeight: 600,
-                        padding: '2px 8px',
-                        borderRadius: '4px',
-                        backgroundColor: user.role === 'mp' ? '#EFF6FF' : '#F0FDF4',
-                        color: user.role === 'mp' ? '#2563EB' : '#16A34A',
-                        border: `1px solid ${user.role === 'mp' ? '#BFDBFE' : '#BBF7D0'}`,
-                        textTransform: 'uppercase',
-                      }}
+                      className={`inline-block mt-1.5 text-[10px] font-bold px-2 py-0.5 rounded border ${
+                        user.role === 'mp'
+                          ? 'bg-soft-blue/30 text-slate-800 border-soft-blue/50'
+                          : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                      }`}
                     >
                       {user.role}
                     </span>
@@ -276,43 +100,13 @@ export default function Navbar({ user, onNavigate, onLogout, currentView, consti
                 </div>
                 <button
                   onClick={() => { onNavigate('settings'); setMenuOpen(false); }}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    width: '100%',
-                    padding: '10px 14px',
-                    border: 'none',
-                    background: 'none',
-                    cursor: 'pointer',
-                    fontSize: '13px',
-                    color: '#475569',
-                    fontFamily: 'inherit',
-                    textAlign: 'left',
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.background = '#F8F9FA'}
-                  onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+                  className="flex items-center gap-2 w-full px-3.5 py-2.5 bg-transparent border-none cursor-pointer text-xs text-slate-600 text-left hover:bg-slate-50"
                 >
                   Settings
                 </button>
                 <button
                   onClick={() => { onLogout(); setMenuOpen(false); }}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    width: '100%',
-                    padding: '10px 14px',
-                    border: 'none',
-                    background: 'none',
-                    cursor: 'pointer',
-                    fontSize: '13px',
-                    color: '#DC2626',
-                    fontFamily: 'inherit',
-                    textAlign: 'left',
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.background = '#FEF2F2'}
-                  onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+                  className="flex items-center gap-2 w-full px-3.5 py-2.5 bg-transparent border-none cursor-pointer text-xs text-rose-600 text-left hover:bg-rose-50"
                 >
                   <LogOut size={14} />
                   Sign out
@@ -321,44 +115,20 @@ export default function Navbar({ user, onNavigate, onLogout, currentView, consti
             )}
           </div>
         ) : (
-          <>
+          <div className="flex items-center gap-2">
             <button
               onClick={() => onNavigate('login')}
-              style={{
-                padding: '7px 16px',
-                border: '1px solid #E2E8F0',
-                borderRadius: '7px',
-                background: '#FFFFFF',
-                color: '#0F172A',
-                fontWeight: 500,
-                fontSize: '14px',
-                cursor: 'pointer',
-                fontFamily: 'inherit',
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.borderColor = '#CBD5E1'}
-              onMouseLeave={(e) => e.currentTarget.style.borderColor = '#E2E8F0'}
+              className="px-3.5 py-1.5 border border-slate-200 rounded-lg bg-white text-slate-800 font-semibold text-xs hover:bg-slate-50 hover:border-slate-350 transition-all cursor-pointer"
             >
               Log in
             </button>
             <button
               onClick={() => onNavigate('register')}
-              style={{
-                padding: '7px 16px',
-                border: '1px solid #2563EB',
-                borderRadius: '7px',
-                background: '#2563EB',
-                color: '#FFFFFF',
-                fontWeight: 500,
-                fontSize: '14px',
-                cursor: 'pointer',
-                fontFamily: 'inherit',
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.background = '#1D4ED8'}
-              onMouseLeave={(e) => e.currentTarget.style.background = '#2563EB'}
+              className="px-3.5 py-1.5 border border-transparent rounded-lg bg-brand-blue text-slate-900 font-semibold text-xs hover:bg-brand-blue/90 shadow-sm transition-all cursor-pointer"
             >
               Register
             </button>
-          </>
+          </div>
         )}
       </div>
 
@@ -366,7 +136,7 @@ export default function Navbar({ user, onNavigate, onLogout, currentView, consti
       {menuOpen && (
         <div
           onClick={() => setMenuOpen(false)}
-          style={{ position: 'fixed', inset: 0, zIndex: 150 }}
+          className="fixed inset-0 z-[40]"
         />
       )}
     </nav>

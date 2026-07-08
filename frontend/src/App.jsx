@@ -6,9 +6,11 @@ import WhatsAppSimulation from './components/WhatsAppSimulation.jsx';
 import MPDashboard from './components/MPDashboard.jsx';
 import NewsFeed from './components/NewsFeed.jsx';
 import ProposalRanking from './components/ProposalRanking.jsx';
+import SettingsPage from './components/SettingsPage.jsx';
+import Footer from './components/Footer.jsx';
 import useLocation from './hooks/useLocation.js';
 import { post, put, setToken, clearToken, getToken } from './utils/api.js';
-import { MapPin, Mic, BarChart2, Newspaper, Send, LayoutDashboard, Loader, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { MapPin, Mic, BarChart2, Newspaper, Send, LayoutDashboard, Loader, AlertCircle, Eye, EyeOff, CheckCircle } from 'lucide-react';
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
@@ -19,190 +21,91 @@ function LandingPage({ onNavigate, constituency }) {
       icon: Mic,
       title: 'Voice Input',
       description: 'Submit suggestions in your language using voice. Supports 12 Indian languages including Hindi, Tamil, Telugu, and more.',
-      color: '#2563EB',
+      bgClass: 'bg-soft-blue/20 border-soft-blue/40 text-slate-800',
+      iconColor: '#0F172A',
     },
     {
       icon: BarChart2,
       title: 'AI Analysis',
       description: 'Every submission is automatically categorized, analyzed for sentiment, and tagged — giving MPs actionable insights.',
-      color: '#16A34A',
+      bgClass: 'bg-warm-sun/40 border-warm-sun/80 text-slate-800',
+      iconColor: '#0F172A',
     },
     {
       icon: Newspaper,
       title: 'Constituency News',
       description: 'Stay updated with local news. AI-powered filtering surfaces the stories that matter most to your area.',
-      color: '#D97706',
+      bgClass: 'bg-warm-peach/30 border-warm-peach/60 text-slate-800',
+      iconColor: '#0F172A',
     },
   ];
 
   return (
-    <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '60px 20px 40px' }}>
+    <div className="max-w-6xl mx-auto px-6 py-12 md:py-16">
       {/* Hero */}
-      <div style={{ textAlign: 'center', marginBottom: '56px' }}>
-        <div
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '5px 14px',
-            border: '1px solid #E2E8F0',
-            borderRadius: '20px',
-            backgroundColor: '#F8F9FA',
-            fontSize: '12px',
-            fontWeight: 600,
-            color: '#64748B',
-            marginBottom: '24px',
-            textTransform: 'uppercase',
-            letterSpacing: '0.06em',
-          }}
-        >
-          <MapPin size={12} /> AI Constituency Development Platform
+      <div className="text-center mb-14">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 border border-slate-200/80 rounded-full bg-white text-xs font-semibold text-slate-500 mb-6 uppercase tracking-wider shadow-xs">
+          <MapPin size={12} className="text-slate-400" /> AI Constituency Development Platform
         </div>
 
-        <h1
-          style={{
-            fontSize: 'clamp(32px, 6vw, 56px)',
-            fontWeight: 700,
-            color: '#0F172A',
-            margin: '0 0 16px',
-            lineHeight: 1.15,
-            letterSpacing: '-0.02em',
-          }}
-        >
-          People's Priorities
+        <h1 className="text-4xl md:text-6xl font-extrabold bg-gradient-to-r from-slate-900 via-brand-blue to-slate-800 bg-clip-text text-transparent mb-4 tracking-tight leading-tight">
+          Empowering Every Voice
         </h1>
 
-        <p
-          style={{
-            fontSize: 'clamp(16px, 2.5vw, 20px)',
-            color: '#475569',
-            maxWidth: '560px',
-            margin: '0 auto 32px',
-            lineHeight: '1.6',
-          }}
-        >
-          Bridge the gap between citizens and their representatives.
-          Submit concerns, track development, and hold accountability — powered by AI.
+        <p className="text-base md:text-lg text-slate-600 max-w-2xl mx-auto mb-8 leading-relaxed">
+          A modern, transparent platform bridging the gap between complex governance and the everyday citizen. Participate, propose, and prioritize what matters most to your community.
         </p>
 
         {constituency && (
-          <div style={{ fontSize: '13px', color: '#64748B', marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
-            <MapPin size={13} color="#2563EB" />
-            Detected: <strong style={{ color: '#0F172A' }}>{constituency}</strong>
+          <div className="text-xs text-slate-500 mb-8 flex items-center justify-center gap-1.5">
+            <MapPin size={13} className="text-brand-blue" />
+            Detected Constituency: <strong className="text-slate-800 font-bold">{constituency}</strong>
           </div>
         )}
 
-        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+        <div className="flex gap-3.5 justify-center flex-wrap">
           <button
             onClick={() => onNavigate('citizen')}
-            style={{
-              padding: '12px 28px',
-              border: 'none',
-              borderRadius: '9px',
-              background: '#2563EB',
-              color: '#FFFFFF',
-              fontWeight: 600,
-              fontSize: '15px',
-              cursor: 'pointer',
-              fontFamily: 'inherit',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.background = '#1D4ED8'}
-            onMouseLeave={(e) => e.currentTarget.style.background = '#2563EB'}
+            className="px-6 py-3 rounded-lg bg-brand-blue hover:bg-brand-blue/90 text-slate-900 font-semibold text-sm cursor-pointer flex items-center gap-2 transition-all shadow-xs hover:shadow-md border-none"
           >
-            <Send size={16} /> Submit a Suggestion
+            Get Started <Send size={15} />
           </button>
           <button
             onClick={() => onNavigate('mp-dashboard')}
-            style={{
-              padding: '12px 28px',
-              border: '1px solid #E2E8F0',
-              borderRadius: '9px',
-              background: '#FFFFFF',
-              color: '#0F172A',
-              fontWeight: 600,
-              fontSize: '15px',
-              cursor: 'pointer',
-              fontFamily: 'inherit',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#CBD5E1'; e.currentTarget.style.background = '#F8F9FA'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#E2E8F0'; e.currentTarget.style.background = '#FFFFFF'; }}
+            className="px-6 py-3 border border-slate-200 rounded-lg bg-white hover:bg-slate-50 text-slate-800 font-semibold text-sm cursor-pointer flex items-center gap-2 transition-all shadow-xs hover:shadow-md hover:border-slate-350"
           >
-            <LayoutDashboard size={16} /> MP Dashboard
+            MP Dashboard <LayoutDashboard size={15} />
           </button>
         </div>
       </div>
 
       {/* Feature cards */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-          gap: '16px',
-        }}
-      >
-        {features.map(({ icon: Icon, title, description, color }) => (
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        {features.map(({ icon: Icon, title, description, bgClass, iconColor }) => (
           <div
             key={title}
-            style={{
-              backgroundColor: '#FFFFFF',
-              border: '1px solid #E2E8F0',
-              borderRadius: '12px',
-              padding: '24px',
-              transition: 'border-color 0.15s ease',
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.borderColor = '#CBD5E1'}
-            onMouseLeave={(e) => e.currentTarget.style.borderColor = '#E2E8F0'}
+            className="bg-white border border-slate-100 hover:border-brand-blue rounded-xl p-6 shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-350 group"
           >
-            <div
-              style={{
-                width: '44px',
-                height: '44px',
-                borderRadius: '10px',
-                backgroundColor: `${color}12`,
-                border: `1px solid ${color}25`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginBottom: '16px',
-              }}
-            >
-              <Icon size={22} color={color} />
+            <div className={`w-11 h-11 rounded-lg flex items-center justify-center mb-4 border ${bgClass}`}>
+              <Icon size={22} color={iconColor} />
             </div>
-            <h3 style={{ margin: '0 0 8px', fontSize: '16px', fontWeight: 600, color: '#0F172A' }}>{title}</h3>
-            <p style={{ margin: 0, fontSize: '14px', color: '#475569', lineHeight: '1.6' }}>{description}</p>
+            <h3 className="margin-0 mb-2 text-base font-bold text-slate-800">{title}</h3>
+            <p className="margin-0 text-sm text-slate-600 leading-relaxed">{description}</p>
           </div>
         ))}
       </div>
 
       {/* Stats strip */}
-      <div
-        style={{
-          marginTop: '48px',
-          padding: '24px 32px',
-          backgroundColor: '#FFFFFF',
-          border: '1px solid #E2E8F0',
-          borderRadius: '12px',
-          display: 'flex',
-          justifyContent: 'space-around',
-          flexWrap: 'wrap',
-          gap: '20px',
-        }}
-      >
+      <div className="mt-12 bg-white rounded-xl shadow-xs border border-slate-100 p-6 grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-slate-100">
         {[
-          { value: '12', label: 'Languages Supported' },
-          { value: '543', label: 'Constituencies' },
-          { value: 'AI', label: 'Powered Analysis' },
-          { value: '100%', label: 'Open & Transparent' },
+          { value: '15k+', label: 'PROPOSALS' },
+          { value: '4.2M', label: 'CITIZENS' },
+          { value: '89%', label: 'RESOLUTION RATE' },
+          { value: '100%', label: 'ACCESSIBLE' },
         ].map(({ value, label }) => (
-          <div key={label} style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '28px', fontWeight: 700, color: '#0F172A', lineHeight: 1 }}>{value}</div>
-            <div style={{ fontSize: '13px', color: '#64748B', marginTop: '4px' }}>{label}</div>
+          <div key={label} className="text-center py-4 md:py-0 flex flex-col justify-center">
+            <div className="text-3xl font-extrabold text-slate-800 leading-none mb-1">{value}</div>
+            <div className="text-[10px] font-bold text-slate-400 tracking-wider mt-1">{label}</div>
           </div>
         ))}
       </div>
@@ -290,97 +193,71 @@ function AuthForm({ mode, onSuccess, onSwitch }) {
     }
   };
 
-  const inputStyle = {
-    width: '100%',
-    padding: '10px 12px',
-    border: '1px solid #E2E8F0',
-    borderRadius: '7px',
-    fontSize: '14px',
-    fontFamily: 'inherit',
-    color: '#0F172A',
-    outline: 'none',
-    boxSizing: 'border-box',
-  };
-
-  const labelStyle = {
-    display: 'block',
-    fontSize: '13px',
-    fontWeight: 600,
-    color: '#0F172A',
-    marginBottom: '6px',
-  };
-
   return (
-    <div style={{ maxWidth: '400px', margin: '48px auto', padding: '0 20px' }}>
-      <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '28px' }}>
-        <h2 style={{ margin: '0 0 4px', fontSize: '20px', fontWeight: 700, color: '#0F172A' }}>
+    <div className="max-w-[420px] mx-auto py-12 px-4">
+      <div className="bg-white border border-[#BFDDF0]/40 rounded-xl p-8 shadow-sm">
+        <h2 className="margin-0 mb-1 text-xl font-bold text-slate-800">
           {isLogin ? 'Welcome back' : 'Create account'}
         </h2>
-        <p style={{ margin: '0 0 24px', fontSize: '13px', color: '#64748B' }}>
+        <p className="margin-0 mb-6 text-xs text-slate-500">
           {isLogin ? 'Sign in to continue.' : 'Join the platform and make your voice heard.'}
         </p>
 
         {/* Google login */}
         {GOOGLE_CLIENT_ID && (
           <>
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px', width: '100%' }}>
-              <div id="google-signin-btn-container" style={{ width: '100%', minHeight: '40px', display: 'flex', justifyContent: 'center' }}></div>
+            <div className="flex justify-center mb-4 w-full">
+              <div id="google-signin-btn-container" className="w-full min-h-[40px] flex justify-center"></div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-              <div style={{ flex: 1, height: '1px', backgroundColor: '#E2E8F0' }} />
-              <span style={{ fontSize: '12px', color: '#94A3B8' }}>or</span>
-              <div style={{ flex: 1, height: '1px', backgroundColor: '#E2E8F0' }} />
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex-1 h-px bg-slate-100" />
+              <span className="text-[11px] text-slate-400 font-medium">or</span>
+              <div className="flex-1 h-px bg-slate-100" />
             </div>
           </>
         )}
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           {!isLogin && (
             <div>
-              <label style={labelStyle}>Full Name</label>
+              <label className="block text-xs font-semibold text-slate-800 mb-1.5">Full Name</label>
               <input
                 type="text"
                 placeholder="Your name"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
-                style={inputStyle}
-                onFocus={(e) => e.target.style.borderColor = '#2563EB'}
-                onBlur={(e) => e.target.style.borderColor = '#E2E8F0'}
+                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 bg-white placeholder-slate-400 focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20 transition-all"
               />
             </div>
           )}
 
           <div>
-            <label style={labelStyle}>Email</label>
+            <label className="block text-xs font-semibold text-slate-800 mb-1.5">Email Address</label>
             <input
               type="email"
               placeholder="you@example.com"
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
               required
-              style={inputStyle}
-              onFocus={(e) => e.target.style.borderColor = '#2563EB'}
-              onBlur={(e) => e.target.style.borderColor = '#E2E8F0'}
+              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 bg-white placeholder-slate-400 focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20 transition-all"
             />
           </div>
 
           <div>
-            <label style={labelStyle}>Password</label>
-            <div style={{ position: 'relative' }}>
+            <label className="block text-xs font-semibold text-slate-800 mb-1.5">Password</label>
+            <div className="relative">
               <input
                 type={showPassword ? 'text' : 'password'}
                 placeholder="••••••••"
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
                 required
-                style={{ ...inputStyle, paddingRight: '40px' }}
-                onFocus={(e) => e.target.style.borderColor = '#2563EB'}
-                onBlur={(e) => e.target.style.borderColor = '#E2E8F0'}
+                className="w-full pl-3 pr-10 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 bg-white placeholder-slate-400 focus:outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20 transition-all"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#64748B', padding: '2px' }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none bg-transparent border-none cursor-pointer p-0.5"
               >
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
@@ -389,23 +266,16 @@ function AuthForm({ mode, onSuccess, onSwitch }) {
 
           {!isLogin && (
             <div>
-              <label style={labelStyle}>I am a</label>
-              <div style={{ display: 'flex', gap: '10px' }}>
+              <label className="block text-xs font-semibold text-slate-800 mb-1.5">I am a</label>
+              <div className="flex gap-2.5">
                 {['citizen', 'mp'].map((role) => (
                   <label
                     key={role}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '7px',
-                      padding: '8px 14px',
-                      border: `1px solid ${form.role === role ? '#2563EB' : '#E2E8F0'}`,
-                      borderRadius: '7px',
-                      backgroundColor: form.role === role ? '#EFF6FF' : '#FFFFFF',
-                      cursor: 'pointer',
-                      flex: 1,
-                      justifyContent: 'center',
-                    }}
+                    className={`flex items-center gap-1.5 px-4 py-2 border rounded-lg justify-center flex-1 cursor-pointer transition-all ${
+                      form.role === role
+                        ? 'border-brand-blue bg-soft-blue/15 text-slate-800 font-semibold'
+                        : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'
+                    }`}
                   >
                     <input
                       type="radio"
@@ -413,9 +283,9 @@ function AuthForm({ mode, onSuccess, onSwitch }) {
                       value={role}
                       checked={form.role === role}
                       onChange={() => setForm({ ...form, role })}
-                      style={{ accentColor: '#2563EB' }}
+                      className="hidden"
                     />
-                    <span style={{ fontSize: '13px', fontWeight: 500, color: form.role === role ? '#2563EB' : '#475569', textTransform: 'capitalize' }}>
+                    <span className="text-xs font-semibold capitalize">
                       {role === 'mp' ? 'MP / Official' : 'Citizen'}
                     </span>
                   </label>
@@ -425,7 +295,7 @@ function AuthForm({ mode, onSuccess, onSwitch }) {
           )}
 
           {error && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '9px 12px', backgroundColor: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '7px', color: '#DC2626', fontSize: '13px' }}>
+            <div className="flex items-center gap-2 p-3 bg-rose-50 border border-rose-100 rounded-lg text-rose-600 text-xs font-semibold">
               <AlertCircle size={15} /> {error}
             </div>
           )}
@@ -433,85 +303,38 @@ function AuthForm({ mode, onSuccess, onSwitch }) {
           <button
             type="submit"
             disabled={loading}
-            style={{
-              padding: '11px',
-              border: 'none',
-              borderRadius: '8px',
-              background: loading ? '#93C5FD' : '#2563EB',
-              color: '#FFFFFF',
-              fontWeight: 600,
-              fontSize: '14px',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              fontFamily: 'inherit',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-            }}
+            className={`w-full py-2.5 rounded-lg text-slate-900 font-semibold text-sm cursor-pointer flex items-center justify-center gap-2 transition-all border-none ${
+              loading ? 'bg-brand-blue/50 cursor-not-allowed' : 'bg-brand-blue hover:bg-brand-blue/90 shadow-xs'
+            }`}
           >
-            {loading ? <><Loader size={15} style={{ animation: 'spin 1s linear infinite' }} /> Please wait...</> : (isLogin ? 'Sign In' : 'Create Account')}
+            {loading ? <><Loader size={15} className="animate-spin" /> Please wait...</> : (isLogin ? 'Sign In' : 'Create Account')}
           </button>
         </form>
 
-        <div style={{ marginTop: '16px', textAlign: 'center', fontSize: '13px', color: '#64748B' }}>
+        <div className="mt-5 text-center text-xs text-slate-500">
           {isLogin ? "Don't have an account?" : 'Already have an account?'}{' '}
           <button
             onClick={onSwitch}
-            style={{ background: 'none', border: 'none', color: '#2563EB', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', fontSize: '13px' }}
+            className="background-none border-none text-brand-blue font-bold cursor-pointer hover:underline text-xs bg-transparent p-0"
           >
             {isLogin ? 'Register' : 'Sign In'}
           </button>
         </div>
       </div>
-      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
 
-// ─── Settings Page ────────────────────────────────────────────────────────────
-function SettingsPage({ user, onLogout }) {
-  return (
-    <div style={{ maxWidth: '600px', margin: '40px auto', padding: '0 20px' }}>
-      <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#0F172A', marginBottom: '20px' }}>Settings</h1>
-      <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '20px', marginBottom: '16px' }}>
-        <h3 style={{ margin: '0 0 12px', fontSize: '14px', fontWeight: 600, color: '#0F172A' }}>Account</h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <div style={{ fontSize: '13px', color: '#64748B' }}>Name: <span style={{ color: '#0F172A', fontWeight: 500 }}>{user?.name || '—'}</span></div>
-          <div style={{ fontSize: '13px', color: '#64748B' }}>Email: <span style={{ color: '#0F172A', fontWeight: 500 }}>{user?.email || '—'}</span></div>
-          <div style={{ fontSize: '13px', color: '#64748B' }}>Role: <span style={{ color: '#0F172A', fontWeight: 500, textTransform: 'capitalize' }}>{user?.role || '—'}</span></div>
-        </div>
-        <button
-          onClick={onLogout}
-          style={{
-            marginTop: '16px',
-            padding: '8px 16px',
-            border: '1px solid #FECACA',
-            borderRadius: '7px',
-            background: '#FEF2F2',
-            color: '#DC2626',
-            fontSize: '13px',
-            fontWeight: 500,
-            cursor: 'pointer',
-            fontFamily: 'inherit',
-          }}
-        >
-          Sign Out
-        </button>
-      </div>
-    </div>
-  );
-}
 
 // ─── Proposal Ranking Page ────────────────────────────────────────────────────
 function ProposalRankingPage({ constituency }) {
   return (
-    <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '24px 20px' }}>
+    <div className="max-w-7xl mx-auto px-6 py-6">
       <ProposalRanking constituency={constituency} />
     </div>
   );
 }
 
-// ─── App (root) ───────────────────────────────────────────────────────────────
 // ─── App (root) ───────────────────────────────────────────────────────────────
 function AppContent() {
   const [user, setUser] = useState(() => {
@@ -523,7 +346,7 @@ function AppContent() {
   const location = useRouteLocation();
   const { constituency, lat, lon, setConstituency, retry: detectLocation } = useLocation();
 
-  // If user profile has a saved constituency, sync it globally on mount/login
+  // Sync saved constituency to state
   useEffect(() => {
     if (user?.constituency && user.constituency !== constituency) {
       setConstituency(user.constituency);
@@ -547,6 +370,14 @@ function AppContent() {
     localStorage.removeItem('pp_user');
     navigate('/');
   }, [navigate]);
+
+  const handleUpdateUser = useCallback((userData) => {
+    setUser(userData);
+    localStorage.setItem('pp_user', JSON.stringify(userData));
+    if (userData?.constituency) {
+      setConstituency(userData.constituency);
+    }
+  }, [setConstituency]);
 
   const handleNavigate = useCallback((targetView) => {
     const viewToRoute = {
@@ -595,7 +426,7 @@ function AppContent() {
   const currentView = getActiveView();
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#F8F9FA' }}>
+    <div className="min-h-screen flex flex-col bg-gradient-to-tr from-soft-blue/15 via-warm-sun/10 to-slate-50/60 text-slate-800">
       <Navbar
         user={user}
         onNavigate={handleNavigate}
@@ -605,7 +436,7 @@ function AppContent() {
         onConstituencyChange={handleConstituencyChange}
         onDetectLocation={detectLocation}
       />
-      <main>
+      <main className="flex-1">
         <Routes>
           <Route path="/" element={<LandingPage onNavigate={handleNavigate} constituency={constituency} />} />
           <Route path="/login" element={<AuthForm mode="login" onSuccess={handleAuthSuccess} onSwitch={() => navigate('/register')} />} />
@@ -623,7 +454,7 @@ function AppContent() {
           <Route path="/news" element={<NewsFeed constituency={constituency} setConstituency={handleConstituencyChange} />} />
           <Route path="/settings" element={
             user ? (
-              <SettingsPage user={user} onLogout={handleLogout} />
+              <SettingsPage user={user} onLogout={handleLogout} onUpdateUser={handleUpdateUser} />
             ) : (
               <Navigate to="/login" replace />
             )
@@ -631,6 +462,7 @@ function AppContent() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
+      <Footer onNavigate={handleNavigate} />
     </div>
   );
 }
