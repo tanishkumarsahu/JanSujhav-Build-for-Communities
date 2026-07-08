@@ -225,6 +225,61 @@ const STRUCTURAL_DATA = {
       citizen_context: 'Flyover construction zone; no proper bypass; 2x traffic density vs capacity.',
     },
   ],
+  water_supply: [
+    {
+      proposal_id: 'WT-TEMPLATE',
+      constituency: 'Template',
+      ward_id: 'WARD-05',
+      location: { lat: null, lng: null, area: 'Water Supply Area' },
+      pipeline_deficit_pct: 70,
+      citizen_context: 'Tap water unavailable in multiple pockets; low pressure.',
+      first_reported_date: '2026-07-08',
+    }
+  ],
+  health_centre: [
+    {
+      proposal_id: 'HLT-TEMPLATE',
+      constituency: 'Template',
+      ward_id: 'WARD-08',
+      location: { lat: null, lng: null, area: 'Primary Health Area' },
+      beds_shortage_pct: 60,
+      citizen_context: 'Nearest hospital is 12km away; local health sub-centre lacks staff.',
+      first_reported_date: '2026-07-08',
+    }
+  ],
+  power_grid: [
+    {
+      proposal_id: 'PWR-TEMPLATE',
+      constituency: 'Template',
+      ward_id: 'WARD-10',
+      location: { lat: null, lng: null, area: 'Power Station Zone' },
+      outages_per_month: 12,
+      citizen_context: 'Frequent load shedding (4-6 hours daily); voltage fluctuations damage appliances.',
+      first_reported_date: '2026-07-08',
+    }
+  ],
+  sanitation_facility: [
+    {
+      proposal_id: 'SAN-TEMPLATE',
+      constituency: 'Template',
+      ward_id: 'WARD-03',
+      location: { lat: null, lng: null, area: 'Sanitation Zone' },
+      waste_uncollected_pct: 65,
+      citizen_context: 'Open dumping of garbage; drain water overflows onto roads during rain.',
+      first_reported_date: '2026-07-08',
+    }
+  ],
+  community_centre: [
+    {
+      proposal_id: 'COM-TEMPLATE',
+      constituency: 'Template',
+      ward_id: 'WARD-15',
+      location: { lat: null, lng: null, area: 'Community Facility Center' },
+      youth_density_score: 75,
+      citizen_context: 'No common hall for local meetings, vocational training, or community celebrations.',
+      first_reported_date: '2026-07-08',
+    }
+  ],
 };
 
 /**

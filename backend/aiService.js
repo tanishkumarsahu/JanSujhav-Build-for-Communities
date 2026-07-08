@@ -87,7 +87,7 @@ async function getModel() {
   return genAI.getGenerativeModel({ model: modelName });
 }
 
-const FALLBACK_MODELS = ['gemma-2-27b-it', 'gemma-2-9b-it', 'gemini-1.5-flash'];
+const FALLBACK_MODELS = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-2.0-flash-lite'];
 
 /**
  * Helper to call generateContent with sequential fallbacks.
@@ -356,30 +356,46 @@ IMPORTANT: Return ONLY the raw JSON object. No markdown, no fences, no explanati
 }
 
 /**
- * Use Gemini to contrast two proposals and write a concise sentence explaining the priority difference.
- * @param {object} proposalA - Higher ranking proposal
- * @param {object} proposalB - Lower ranking proposal
- * @returns {Promise<string>} Comparison sentence
+ * Generate dynamic structural contexts and area names for all categories in a seeded constituency using a single Gemini call.
+ * @param {string} constituency
+ * @param {string[]} categoriesList
+ * @returns {Promise<object|null>}
  */
-async function generateComparisonNote(proposalA, proposalB) {
+async function generateAllProposalsContext(constituency, categoriesList) {
   try {
-    const prompt = `You are a public policy analyst in India. Contrast these two constituency development proposals:
-Proposal A: "${proposalA.title}" (Category: ${proposalA.category}, Score: ${proposalA.priority_score})
-- Citizen Urgency: ${proposalA.citizen_detail}
-- Structural Need: ${proposalA.structural_detail}
+    const prompt = `You are a public policy analyst specializing in Indian constituency development.
+For the constituency "${constituency}", write a realistic, local-sounding structural context detail for each of the following development categories:
+${categoriesList.join(', ')}
 
-Proposal B: "${proposalB.title}" (Category: ${proposalB.category}, Score: ${proposalB.priority_score})
-- Citizen Urgency: ${proposalB.citizen_detail}
-- Structural Need: ${proposalB.structural_detail}
+Generate a JSON object where the keys are the categories and the values are objects with exactly these fields:
+{
+  "citizen_context": "A detailed 1-2 sentence description of a realistic local issue for this category in ${constituency}. Mention specific realistic local area names if possible.",
+  "location_area": "A realistic neighborhood or area name in ${constituency} (e.g. ward, locality, or block name)"
+}
 
-Write one concise, professional sentence contrasting them and explaining why Proposal A is prioritized over Proposal B. Keep it under 25 words.`;
+Example output:
+{
+  "school_upgrade": {
+    "citizen_context": "...",
+    "location_area": "..."
+  },
+  "road_repair": {
+    "citizen_context": "...",
+    "location_area": "..."
+  }
+}
+
+IMPORTANT: Return ONLY the raw JSON object. No markdown, no fences, no extra text.`;
 
     const text = await generateContentWithFallbacks(prompt);
-    return text.trim();
+    const parsed = safeParseJSON(text);
+    if (parsed && typeof parsed === 'object') {
+      return parsed;
+    }
   } catch (err) {
-    console.error('[AI] generateComparisonNote error:', err.message);
-    return `Prioritized due to higher combined urgency (${proposalA.priority_score} vs ${proposalB.priority_score}).`;
+    console.error('[AI] generateAllProposalsContext error:', err.message);
   }
+  return null;
 }
 
 module.exports = {
@@ -390,5 +406,6 @@ module.exports = {
   generateRecommendations,
   filterNewsByQuery,
   enrichNewsArticle,
+  generateAllProposalsContext,
   generateContentWithFallbacks,
 };

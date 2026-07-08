@@ -75,31 +75,38 @@ export async function ipToLocation() {
       headers: { 'Accept': 'application/json' },
     });
 
-    if (!res.ok) {
-      console.warn(`ipapi.co returned status ${res.status}`);
-      return null;
+    if (res.ok) {
+      const data = await res.json();
+      if (data && !data.error && data.latitude && data.longitude) {
+        return {
+          lat: data.latitude,
+          lon: data.longitude,
+          city: data.city || null,
+          region: data.region || null,
+        };
+      }
     }
-
-    const data = await res.json();
-
-    if (data.error) {
-      console.warn('ipapi.co error:', data.reason);
-      return null;
-    }
-
-    if (!data.latitude || !data.longitude) {
-      console.warn('ipapi.co: no coordinates in response');
-      return null;
-    }
-
-    return {
-      lat: data.latitude,
-      lon: data.longitude,
-      city: data.city || null,
-      region: data.region || null,
-    };
   } catch (err) {
-    console.warn('ipToLocation failed:', err.message);
-    return null;
+    console.warn('ipapi.co failed:', err.message);
   }
+
+  // Fallback to ip-api.com
+  try {
+    const res = await fetch('https://ip-api.com/json/');
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.status === 'success' && data.lat && data.lon) {
+        return {
+          lat: data.lat,
+          lon: data.lon,
+          city: data.city || null,
+          region: data.regionName || null,
+        };
+      }
+    }
+  } catch (err) {
+    console.warn('ip-api.com failed:', err.message);
+  }
+
+  return null;
 }

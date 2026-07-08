@@ -1,20 +1,18 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { get, post } from '../utils/api.js';
 
 /**
- * useNewsPolling — fetches and polls news articles from the API
+ * useNewsPolling — fetches news articles from the API on demand
  *
  * @param {Object} opts
  * @param {string} opts.constituency - constituency name to filter by
  * @param {Object} opts.filters - filter object (category, sentiment, date, keyword)
- * @param {number} opts.pollInterval - polling interval in ms (default: 5 min)
  *
  * @returns {{ articles, total, loading, error, lastRefreshedAt, refresh }}
  */
 export default function useNewsPolling({
   constituency = null,
   filters = {},
-  pollInterval = 5 * 60 * 1000,
 } = {}) {
   const [articles, setArticles] = useState([]);
   const [total, setTotal] = useState(0);
@@ -23,15 +21,22 @@ export default function useNewsPolling({
   const [lastRefreshedAt, setLastRefreshedAt] = useState(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  const lastScrapedConstituency = useRef(null);
-
-  const refresh = useCallback(() => {
-    setRefreshTrigger(prev => prev + 1);
-  }, []);
+  const refresh = useCallback(async () => {
+    if (!constituency) return;
+    setLoading(true);
+    setError(null);
+    try {
+      await post('/api/news/refresh', { constituency }, false);
+    } catch (err) {
+      console.error('[News] Refresh scrape trigger failed:', err.message);
+      setError(err.message || 'Failed to fetch fresh news. Showing existing cached news.');
+    } finally {
+      setRefreshTrigger(prev => prev + 1);
+    }
+  }, [constituency]);
 
   useEffect(() => {
     let active = true;
-    const controller = new AbortController();
 
     async function loadData() {
       if (!active) return;
@@ -60,22 +65,8 @@ export default function useNewsPolling({
         setArticles(fetchedArticles);
         setTotal(data?.total ?? (Array.isArray(data) ? data.length : 0));
         setLastRefreshedAt(new Date());
-
-        // Background scrape if 0 articles on first load
-        if (fetchedArticles.length === 0 && constituency && lastScrapedConstituency.current !== constituency) {
-          lastScrapedConstituency.current = constituency;
-          try {
-            await post('/api/news/refresh', { constituency }, false);
-            // Re-trigger the fetch now that they are stored in the DB
-            if (active) {
-              setRefreshTrigger(prev => prev + 1);
-            }
-          } catch (err) {
-            console.error('[News] Background scrape trigger failed:', err.message);
-          }
-        }
       } catch (err) {
-        if (active && err.name !== 'AbortError') {
+        if (active) {
           setError(err.message || 'Failed to load news articles.');
         }
       } finally {
@@ -87,17 +78,10 @@ export default function useNewsPolling({
 
     loadData();
 
-    // Setup polling
-    const interval = setInterval(() => {
-      loadData();
-    }, pollInterval);
-
     return () => {
       active = false;
-      controller.abort();
-      clearInterval(interval);
     };
-  }, [constituency, JSON.stringify(filters), pollInterval, refreshTrigger]);
+  }, [constituency, JSON.stringify(filters), refreshTrigger]);
 
   return { articles, total, loading, error, lastRefreshedAt, refresh };
 }

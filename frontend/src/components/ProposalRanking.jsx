@@ -29,6 +29,45 @@ function RoadIcon() {
     </svg>
   );
 }
+function DropletIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 22a7 7 0 0 0 7-7c0-4.3-7-13-7-13S5 10.7 5 15a7 7 0 0 0 7 7z"/>
+    </svg>
+  );
+}
+function HeartPulseIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+      <path d="M3.22 12H9.5l1.5-3 2 6 1.5-3h4.28"/>
+    </svg>
+  );
+}
+function BoltIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+    </svg>
+  );
+}
+function TrashIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+    </svg>
+  );
+}
+function UsersIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+      <circle cx="9" cy="7" r="4"/>
+      <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+      <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+    </svg>
+  );
+}
 function ChevronDown({ expanded }) {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
@@ -77,6 +116,46 @@ const CATEGORY_CONFIG = {
     bg: '#FFFBEB',
     border: '#FDE68A',
     badge: '#B45309',
+  },
+  water_supply: {
+    label: 'Water Supply',
+    icon: DropletIcon,
+    color: '#0EA5E9',
+    bg: '#F0F9FF',
+    border: '#BAE6FD',
+    badge: '#0369A1',
+  },
+  health_centre: {
+    label: 'Health Centre',
+    icon: HeartPulseIcon,
+    color: '#EC4899',
+    bg: '#FDF2F8',
+    border: '#FBCFE8',
+    badge: '#BE185D',
+  },
+  power_grid: {
+    label: 'Power Grid',
+    icon: BoltIcon,
+    color: '#EAB308',
+    bg: '#FEF9C3',
+    border: '#FEF08A',
+    badge: '#A16207',
+  },
+  sanitation_facility: {
+    label: 'Sanitation',
+    icon: TrashIcon,
+    color: '#10B981',
+    bg: '#ECFDF5',
+    border: '#A7F3D0',
+    badge: '#047857',
+  },
+  community_centre: {
+    label: 'Community Centre',
+    icon: UsersIcon,
+    color: '#6366F1',
+    bg: '#E0E7FF',
+    border: '#C7D2FE',
+    badge: '#4338CA',
   },
 };
 
@@ -189,11 +268,54 @@ function ScoreBreakdown({ breakdown, category }) {
           fontSize: '12px',
           color: '#15803D',
           display: 'flex',
+          flexDirection: 'column',
           gap: '6px',
-          alignItems: 'flex-start',
         }}>
-          <InfoIcon />
-          <span><strong>Citizen:</strong> {citizen_component.detail}</span>
+          <div style={{ display: 'flex', gap: '6px', alignItems: 'flex-start' }}>
+            <InfoIcon />
+            <span><strong>Citizen:</strong> {citizen_component.detail}</span>
+          </div>
+          {citizen_component.suggestions && citizen_component.suggestions.length > 0 && (
+            <div style={{
+              marginTop: '6px',
+              borderTop: '1px solid #BBF7D0',
+              paddingTop: '6px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '6px',
+            }}>
+              <span style={{ fontSize: '11px', fontWeight: 700, color: '#16A34A', textTransform: 'uppercase' }}>
+                Recent Citizen Suggestions:
+              </span>
+              {citizen_component.suggestions.map((s) => (
+                <div key={s.id} style={{
+                  padding: '6px 8px',
+                  backgroundColor: '#FFFFFF',
+                  border: '1px solid #DCFCE7',
+                  borderRadius: '4px',
+                  fontSize: '11.5px',
+                  color: '#374151',
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px', fontSize: '9px' }}>
+                    <span style={{
+                      fontWeight: 700,
+                      color: s.sentiment === 'Negative' ? '#DC2626' : s.sentiment === 'Positive' ? '#16A34A' : '#475569',
+                      backgroundColor: s.sentiment === 'Negative' ? '#FEE2E2' : s.sentiment === 'Positive' ? '#DCFCE7' : '#F1F5F9',
+                      padding: '1px 5px',
+                      borderRadius: '3px',
+                    }}>
+                      {s.sentiment || 'Neutral'}
+                    </span>
+                    <span style={{ color: '#94A3B8' }}>
+                      {new Date(s.created_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <div style={{ fontWeight: 500, color: '#0F172A' }}>{s.title || 'Untitled Suggestion'}</div>
+                  <div style={{ color: '#64748B', marginTop: '2px', fontSize: '11px' }}>{s.description}</div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
         <div style={{
           padding: '8px 10px',

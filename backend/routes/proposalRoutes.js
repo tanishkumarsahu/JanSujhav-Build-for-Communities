@@ -8,29 +8,69 @@ const {
   scoreProposal,
   generateComparisonNote,
   STRUCTURAL_DATA,
+  getCache,
+  clearCache,
 } = require('../demandScoring');
 
+
+const aiService = require('../aiService');
 
 // Helper to dynamically seed template proposals for a new constituency if they don't exist in the DB
 async function ensureProposalsForConstituency(constituency) {
   if (!constituency) return;
   const cName = constituency.trim();
+  const STANDARD_CITIES = ['varanasi', 'lucknow', 'new delhi', 'mumbai north', 'bengaluru central'];
+  const isStandard = STANDARD_CITIES.includes(cName.toLowerCase());
+
   try {
-    const { rows: countRows } = await query(
-      'SELECT COUNT(*) as cnt FROM proposals WHERE LOWER(constituency) = LOWER($1)',
-      [cName]
-    );
-    if (parseInt(countRows[0].cnt, 10) === 0) {
-      console.log(`[DB] Dynamically seeding proposals for new constituency: "${cName}"`);
-      const { STRUCTURAL_DATA } = require('../structuralData');
-      for (const [category, proposals] of Object.entries(STRUCTURAL_DATA)) {
-        for (const p of proposals) {
-          const newId = `${p.proposal_id}_${cName.replace(/\s+/g, '_').toLowerCase()}`;
+    // Always check and seed missing proposal categories dynamically
+    const { STRUCTURAL_DATA } = require('../structuralData');
+
+    // Pre-generate all AI contexts for this constituency in a single API call if it is custom
+    let aiContexts = null;
+    if (!isStandard) {
+      const categoriesList = Object.keys(STRUCTURAL_DATA);
+      console.log(`[AI] Generating localized proposal descriptions for "${cName}"...`);
+      aiContexts = await aiService.generateAllProposalsContext(cName, categoriesList);
+    }
+
+    for (const [category, proposals] of Object.entries(STRUCTURAL_DATA)) {
+      // Standard cities only get their own proposals. Custom cities get exactly 1 template proposal per category.
+      const proposalsToSeed = isStandard
+        ? proposals.filter(p => p.constituency.toLowerCase() === cName.toLowerCase())
+        : (proposals.length > 0 ? [proposals[0]] : []);
+
+      for (const p of proposalsToSeed) {
+        const newId = isStandard 
+          ? p.proposal_id 
+          : `${p.proposal_id}_${cName.replace(/\s+/g, '_').toLowerCase()}`;
+        
+        // Only seed if it doesn't already exist to conserve DB time
+        const { rows: exists } = await query('SELECT 1 FROM proposals WHERE proposal_id = $1', [newId]);
+        if (exists.length === 0) {
+          console.log(`[DB] Seeding proposal ${newId} for ${cName}...`);
+          
+          let citizenContext = p.citizen_context;
+          let locationArea = p.location?.area || null;
+
+          // Map context from our single pre-generated AI call
+          if (aiContexts && aiContexts[category]) {
+            const contextForCat = aiContexts[category];
+            if (contextForCat.citizen_context) citizenContext = contextForCat.citizen_context;
+            if (contextForCat.location_area) locationArea = contextForCat.location_area;
+          }
+
           const clonedProp = {
             ...p,
             proposal_id: newId,
             constituency: cName,
+            citizen_context: citizenContext,
+            location: {
+              ...p.location,
+              area: locationArea
+            }
           };
+
           await query(
             `INSERT INTO proposals (proposal_id, category, constituency, ward_id, location_lat, location_lng, location_area, structural_data)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -42,13 +82,12 @@ async function ensureProposalsForConstituency(constituency) {
               p.ward_id,
               p.location?.lat || null,
               p.location?.lng || null,
-              p.location?.area || null,
+              locationArea,
               JSON.stringify(clonedProp)
             ]
           );
         }
       }
-      console.log(`[DB] Dynamic seeding complete for "${cName}".`);
     }
   } catch (err) {
     console.error(`[DB] ensureProposalsForConstituency error for "${cName}":`, err.message);
@@ -71,14 +110,14 @@ router.get('/ranked', async (req, res) => {
       await ensureProposalsForConstituency(parentPC);
     }
 
-    let ranked = await rankAllProposals();
+    let ranked = await rankAllProposals(parentPC);
     let fallback_note = null;
     const meta = {
       scoring_weights: {
         citizen_alpha: 0.40,
         structural_beta: 0.60,
       },
-      categories_covered: ['school_upgrade', 'vocational_centre', 'road_repair'],
+      categories_covered: ['school_upgrade', 'vocational_centre', 'road_repair', 'water_supply', 'health_centre', 'power_grid', 'sanitation_facility', 'community_centre'],
       data_source: 'Seeded from UDISE+/MoLE/MoRTH patterns — real pipeline ready',
     };
 
@@ -228,6 +267,43 @@ router.post('/compare', async (req, res) => {
   } catch (err) {
     console.error('[Proposals] /compare error:', err.message);
     return res.status(500).json({ success: false, error: 'Failed to compare proposals' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// GET /api/proposals/cache/stats
+// Returns current cache statistics and size.
+// ---------------------------------------------------------------------------
+router.get('/cache/stats', (req, res) => {
+  try {
+    const stats = getCache();
+    return res.status(200).json({
+      success: true,
+      data: {
+        cache_stats: stats,
+        message: 'Cache is actively caching proposal scores (5min), rankings (5min), and comparisons (15min)',
+      },
+    });
+  } catch (err) {
+    console.error('[Proposals] /cache/stats error:', err.message);
+    return res.status(500).json({ success: false, error: 'Failed to fetch cache stats' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// POST /api/proposals/cache/clear
+// Manually clears all caches (admin only in production).
+// ---------------------------------------------------------------------------
+router.post('/cache/clear', (req, res) => {
+  try {
+    clearCache();
+    return res.status(200).json({
+      success: true,
+      message: 'All proposal caches have been cleared. Scores will be recalculated on next request.',
+    });
+  } catch (err) {
+    console.error('[Proposals] /cache/clear error:', err.message);
+    return res.status(500).json({ success: false, error: 'Failed to clear cache' });
   }
 });
 

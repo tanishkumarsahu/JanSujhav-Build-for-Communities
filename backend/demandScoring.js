@@ -16,10 +16,97 @@ const { STRUCTURAL_DATA, CITIZEN_SIGNALS } = require('./structuralData');
 const { generateContentWithFallbacks } = require('./aiService');
 const { query } = require('./db');
 
+// ---------------------------------------------------------------------------
+// In-memory caching layer (TTL: 5 minutes for proposals, 15 minutes for comparisons)
+// ---------------------------------------------------------------------------
+class ScoringCache {
+  constructor() {
+    this.proposalCache = new Map();
+    this.rankingCache = new Map();
+    this.comparisonCache = new Map();
+    this.CACHE_TTL_PROPOSALS = 5 * 60 * 1000; // 5 min
+    this.CACHE_TTL_RANKINGS = 5 * 60 * 1000; // 5 min
+    this.CACHE_TTL_COMPARISONS = 15 * 60 * 1000; // 15 min
+  }
+
+  getCacheKey(...parts) {
+    return parts.map(p => String(p).toLowerCase()).join('::');
+  }
+
+  setProposal(proposalId, category, scored) {
+    const key = this.getCacheKey('proposal', proposalId, category);
+    this.proposalCache.set(key, { data: scored, ts: Date.now() });
+  }
+
+  getProposal(proposalId, category) {
+    const key = this.getCacheKey('proposal', proposalId, category);
+    const entry = this.proposalCache.get(key);
+    if (entry && Date.now() - entry.ts < this.CACHE_TTL_PROPOSALS) {
+      return entry.data;
+    }
+    this.proposalCache.delete(key);
+    return null;
+  }
+
+  setRanking(constituency, scored) {
+    const key = this.getCacheKey('ranking', constituency);
+    this.rankingCache.set(key, { data: scored, ts: Date.now() });
+  }
+
+  getRanking(constituency) {
+    const key = this.getCacheKey('ranking', constituency);
+    const entry = this.rankingCache.get(key);
+    if (entry && Date.now() - entry.ts < this.CACHE_TTL_RANKINGS) {
+      return entry.data;
+    }
+    this.rankingCache.delete(key);
+    return null;
+  }
+
+  setComparison(idA, idB, note) {
+    // Normalize order for consistent caching
+    const [a, b] = [String(idA), String(idB)].sort();
+    const key = this.getCacheKey('comparison', a, b);
+    this.comparisonCache.set(key, { data: note, ts: Date.now() });
+  }
+
+  getComparison(idA, idB) {
+    const [a, b] = [String(idA), String(idB)].sort();
+    const key = this.getCacheKey('comparison', a, b);
+    const entry = this.comparisonCache.get(key);
+    if (entry && Date.now() - entry.ts < this.CACHE_TTL_COMPARISONS) {
+      return entry.data;
+    }
+    this.comparisonCache.delete(key);
+    return null;
+  }
+
+  clear() {
+    this.proposalCache.clear();
+    this.rankingCache.clear();
+    this.comparisonCache.clear();
+  }
+
+  stats() {
+    return {
+      proposals: this.proposalCache.size,
+      rankings: this.rankingCache.size,
+      comparisons: this.comparisonCache.size,
+    };
+  }
+}
+
+const cache = new ScoringCache();
+
 const CATEGORY_TO_SUGGESTION = {
   school_upgrade: 'Education',
   vocational_centre: 'Education',
   road_repair: 'Roads',
+  water_supply: 'Water',
+  health_centre: 'Health',
+  power_grid: 'Electricity',
+  sanitation_facility: 'Sanitation',
+  community_centre: 'Other',
 };
 
 
@@ -249,6 +336,46 @@ function scoreRoadRepair(structural) {
   };
 }
 
+function scoreWaterSupply(structural) {
+  const deficit = structural.pipeline_deficit_pct || 70;
+  return {
+    score: clamp100(deficit),
+    detail: { pipeline_deficit_pct: deficit }
+  };
+}
+
+function scoreHealthCentre(structural) {
+  const shortage = structural.beds_shortage_pct || 60;
+  return {
+    score: clamp100(shortage),
+    detail: { beds_shortage_pct: shortage }
+  };
+}
+
+function scorePowerGrid(structural) {
+  const outages = structural.outages_per_month || 12;
+  return {
+    score: clamp100(outages * 5),
+    detail: { outages_per_month: outages }
+  };
+}
+
+function scoreSanitation(structural) {
+  const uncollected = structural.waste_uncollected_pct || 65;
+  return {
+    score: clamp100(uncollected),
+    detail: { waste_uncollected_pct: uncollected }
+  };
+}
+
+function scoreCommunityCentre(structural) {
+  const density = structural.youth_density_score || 75;
+  return {
+    score: clamp100(density),
+    detail: { youth_density_score: density }
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Dispatch table — add new categories here
 // ---------------------------------------------------------------------------
@@ -256,12 +383,22 @@ const STRUCTURAL_SCORERS = {
   school_upgrade: scoreSchoolUpgrade,
   vocational_centre: scoreVocationalCentre,
   road_repair: scoreRoadRepair,
+  water_supply: scoreWaterSupply,
+  health_centre: scoreHealthCentre,
+  power_grid: scorePowerGrid,
+  sanitation_facility: scoreSanitation,
+  community_centre: scoreCommunityCentre,
 };
 
 const CATEGORY_LABELS = {
   school_upgrade: 'School Upgrade',
   vocational_centre: 'Vocational Centre',
   road_repair: 'Road Repair',
+  water_supply: 'Water Supply Extension',
+  health_centre: 'Health Centre Upgrade',
+  power_grid: 'Power Grid Reinforcement',
+  sanitation_facility: 'Sanitation Construction',
+  community_centre: 'Community Centre Development',
 };
 
 async function getCitizenSignalFromDB(constituency, category, proposalId) {
@@ -280,11 +417,22 @@ async function getCitizenSignalFromDB(constituency, category, proposalId) {
 
     const row = res.rows[0];
     if (row && parseInt(row.complaint_count, 10) > 0) {
+      // Query individual suggestions contributing to this proposal
+      const { rows: suggestionsList } = await query(
+        `SELECT id, title, description, category, sentiment, created_at, status
+         FROM suggestions
+         WHERE LOWER(constituency) = LOWER($1) AND LOWER(category) = LOWER($2) AND status != 'rejected'
+         ORDER BY created_at DESC
+         LIMIT 5`,
+        [constituency, suggestionCategory]
+      );
+
       return {
         complaint_count: parseInt(row.complaint_count, 10),
         avg_severity: parseFloat(row.avg_severity || 3.0),
         unique_submitters: parseInt(row.unique_submitters, 10),
-        first_reported_date: row.first_reported_date ? new Date(row.first_reported_date).toISOString().split('T')[0] : null
+        first_reported_date: row.first_reported_date ? new Date(row.first_reported_date).toISOString().split('T')[0] : null,
+        suggestions: suggestionsList
       };
     }
   } catch (err) {
@@ -297,6 +445,7 @@ async function getCitizenSignalFromDB(constituency, category, proposalId) {
     avg_severity: 3.0,
     unique_submitters: 3,
     first_reported_date: null,
+    suggestions: []
   };
 }
 
@@ -308,10 +457,27 @@ async function getCitizenSignalFromDB(constituency, category, proposalId) {
  * Score a single proposal and return the full demand_score + score_breakdown.
  * @param {object} proposal  - A structural data record
  * @param {string} category  - 'school_upgrade' | 'vocational_centre' | 'road_repair'
+ * @param {object} [bulkSignals] - Optional pre-fetched citizen signals map
+ * @param {boolean} [skipCache] - Skip cache lookup/set (for bulk operations)
  * @returns {object}         - Scored proposal with demand_score + score_breakdown
  */
-async function scoreProposal(proposal, category) {
-  const citizenSignal = await getCitizenSignalFromDB(proposal.constituency, category, proposal.proposal_id);
+async function scoreProposal(proposal, category, bulkSignals = null, skipCache = false) {
+  // Try cache first
+  if (!skipCache) {
+    const cached = cache.getProposal(proposal.proposal_id, category);
+    if (cached) {
+      return cached;
+    }
+  }
+
+  let citizenSignal;
+  const suggestionCategory = (CATEGORY_TO_SUGGESTION[category] || 'Other').toLowerCase();
+
+  if (bulkSignals && bulkSignals[suggestionCategory]) {
+    citizenSignal = bulkSignals[suggestionCategory];
+  } else {
+    citizenSignal = await getCitizenSignalFromDB(proposal.constituency, category, proposal.proposal_id);
+  }
 
   const citizenResult = computeCitizenScore(citizenSignal);
 
@@ -326,7 +492,7 @@ async function scoreProposal(proposal, category) {
     WEIGHTS.STRUCTURAL_BETA * structuralResult.score
   );
 
-  return {
+  const scored = {
     proposal_id: proposal.proposal_id,
     category,
     category_label: CATEGORY_LABELS[category],
@@ -340,6 +506,7 @@ async function scoreProposal(proposal, category) {
         weight_pct: Math.round(WEIGHTS.CITIZEN_ALPHA * 100),
         detail: `${citizenSignal.complaint_count} complaints, avg severity ${citizenSignal.avg_severity}/5, reported ${citizenSignal.first_reported_date}`,
         raw: citizenResult.detail,
+        suggestions: citizenSignal.suggestions || [],
       },
       structural_component: {
         value: Math.round(structuralResult.score),
@@ -355,6 +522,13 @@ async function scoreProposal(proposal, category) {
     structural_data: proposal,
     citizen_signal: citizenSignal,
   };
+
+  // Cache the result
+  if (!skipCache) {
+    cache.setProposal(proposal.proposal_id, category, scored);
+  }
+
+  return scored;
 }
 
 /**
@@ -368,6 +542,16 @@ function buildStructuralDetail(category, detail, proposal) {
       return `Youth unemployment ${detail.youth_unemployment_rate}% in area; nearest centre ${detail.nearest_centre_km}km; industry demand index ${detail.local_industry_demand_score}/100`;
     case 'road_repair':
       return `${detail.accident_count_12mo} accidents/year, ${detail.accidents_per_km}/km density; surface condition ${detail.surface_condition_score}/100; connects ${detail.wards_connected} wards`;
+    case 'water_supply':
+      return `Pipeline deficit estimated at ${detail.pipeline_deficit_pct}% compared to standard network design`;
+    case 'health_centre':
+      return `Hospital bed shortage at ${detail.beds_shortage_pct}% below recommended WHO per-capita limits`;
+    case 'power_grid':
+      return `Averages ${detail.outages_per_month} major outages/month requiring local grid stabilizer upgrades`;
+    case 'sanitation_facility':
+      return `Waste collection deficit at ${detail.waste_uncollected_pct}% of total daily volume in ward`;
+    case 'community_centre':
+      return `Youth/community density score evaluated at ${detail.youth_density_score}/100`;
     default:
       return JSON.stringify(detail);
   }
@@ -377,28 +561,101 @@ function buildStructuralDetail(category, detail, proposal) {
 // Score all proposals and sort by demand_score
 // ---------------------------------------------------------------------------
 
-async function rankAllProposals() {
+async function rankAllProposals(constituency = null) {
+  // Try ranking cache first
+  if (constituency) {
+    const cached = cache.getRanking(constituency);
+    if (cached) {
+      return cached;
+    }
+  }
+
   const results = [];
   try {
-    const { rows: dbProposals } = await query('SELECT * FROM proposals', []);
-    if (dbProposals.length > 0) {
-      for (const row of dbProposals) {
-        try {
-          const scored = await scoreProposal(row.structural_data, row.category);
-          results.push(scored);
-        } catch (err) {
-          console.error(`[Scoring] Failed to score proposal ${row.proposal_id}:`, err.message);
+    let dbQuery = 'SELECT * FROM proposals';
+    const params = [];
+    if (constituency) {
+      dbQuery = 'SELECT * FROM proposals WHERE LOWER(constituency) = LOWER($1)';
+      params.push(constituency.trim());
+    }
+    
+    const { rows: dbProposals } = await query(dbQuery, params);
+
+    // Fetch bulk signals if constituency is set to avoid N+1 queries
+    let bulkSignals = null;
+    if (constituency) {
+      bulkSignals = {};
+      try {
+        const aggregatesRes = await query(
+          `SELECT 
+             LOWER(category) as cat,
+             COUNT(*)::integer as complaint_count,
+             COUNT(DISTINCT user_id)::integer as unique_submitters,
+             MIN(created_at) as first_reported_date,
+             AVG(CASE WHEN sentiment = 'Negative' THEN 5.0 WHEN sentiment = 'Neutral' THEN 3.0 ELSE 1.0 END)::numeric as avg_severity
+           FROM suggestions 
+           WHERE LOWER(constituency) = LOWER($1) AND status != 'rejected'
+           GROUP BY LOWER(category)`,
+          [constituency.toLowerCase()]
+        );
+
+        for (const row of aggregatesRes.rows) {
+          bulkSignals[row.cat] = {
+            complaint_count: parseInt(row.complaint_count, 10),
+            avg_severity: parseFloat(row.avg_severity || 3.0),
+            unique_submitters: parseInt(row.unique_submitters, 10),
+            first_reported_date: row.first_reported_date ? new Date(row.first_reported_date).toISOString().split('T')[0] : null,
+            suggestions: []
+          };
         }
+
+        const { rows: suggestionsList } = await query(
+          `SELECT id, title, description, LOWER(category) as cat, sentiment, created_at, status
+           FROM suggestions
+           WHERE LOWER(constituency) = LOWER($1) AND status != 'rejected'
+           ORDER BY created_at DESC`,
+          [constituency.toLowerCase()]
+        );
+
+        for (const s of suggestionsList) {
+          if (bulkSignals[s.cat]) {
+            if (bulkSignals[s.cat].suggestions.length < 5) {
+              bulkSignals[s.cat].suggestions.push(s);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('[Scoring] Failed to fetch bulk signals:', err.message);
+      }
+    }
+
+    if (dbProposals.length > 0) {
+      // Score proposals in parallel batches (max 10 concurrent)
+      const batchSize = 10;
+      for (let i = 0; i < dbProposals.length; i += batchSize) {
+        const batch = dbProposals.slice(i, i + batchSize);
+        const scoringPromises = batch.map(row =>
+          scoreProposal(row.structural_data, row.category, bulkSignals, true).catch(err => {
+            console.error(`[Scoring] Failed to score proposal ${row.proposal_id}:`, err.message);
+            return null;
+          })
+        );
+        const scored = await Promise.all(scoringPromises);
+        results.push(...scored.filter(s => s !== null));
       }
     } else {
       throw new Error('Proposals table empty');
     }
   } catch (err) {
     console.warn('[Scoring] DB proposals query failed or empty, falling back to static seed data:', err.message);
+    const filterConstituency = constituency ? constituency.toLowerCase() : null;
     for (const [category, proposals] of Object.entries(STRUCTURAL_DATA)) {
       for (const proposal of proposals) {
+        if (filterConstituency && proposal.constituency.toLowerCase() !== filterConstituency) {
+          continue;
+        }
         try {
-          const scored = await scoreProposal(proposal, category);
+          const scored = await scoreProposal(proposal, category, null, true);
           results.push(scored);
         } catch (err) {
           console.error(`[Scoring] Failed to score fallback ${proposal.proposal_id}:`, err.message);
@@ -408,6 +665,12 @@ async function rankAllProposals() {
   }
 
   results.sort((a, b) => b.demand_score - a.demand_score);
+
+  // Cache the ranking if we have a constituency filter
+  if (constituency) {
+    cache.setRanking(constituency, results);
+  }
+
   return results;
 }
 
@@ -417,13 +680,19 @@ async function rankAllProposals() {
 
 /**
  * Generate a one-line comparison note between two competing proposals.
- * Uses Gemini to write a judge-memorable sentence.
+ * Uses Gemini to write a judge-memorable sentence. Results are cached for 15 minutes.
  * 
  * @param {object} higher  - Higher-ranked proposal (with score_breakdown)
  * @param {object} lower   - Lower-ranked proposal (with score_breakdown)
  * @returns {Promise<string>} One-sentence comparison note
  */
 async function generateComparisonNote(higher, lower) {
+  // Check cache first
+  const cached = cache.getComparison(higher.proposal_id, lower.proposal_id);
+  if (cached) {
+    return cached;
+  }
+
   try {
     const prompt = `You are a concise public policy analyst. In exactly ONE sentence (max 40 words), explain why Proposal A is ranked higher than Proposal B based on their score breakdowns.
 
@@ -438,10 +707,20 @@ Proposal B — "${lower.category_label}" in ${lower.location?.area || lower.cons
 Write a single sentence starting with "Ranked above" that contrasts the key differentiating factor. Be specific with numbers. No markdown.`;
 
     const text = await generateContentWithFallbacks(prompt);
-    return text.trim().replace(/\n/g, ' ');
+    const result = text.trim().replace(/\n/g, ' ');
+    
+    // Cache the result
+    cache.setComparison(higher.proposal_id, lower.proposal_id, result);
+    
+    return result;
   } catch (err) {
     console.error('[Scoring] generateComparisonNote error:', err.message);
-    return `Ranked above due to higher combined citizen demand (${higher.score_breakdown.citizen_component.value}) and structural need (${higher.score_breakdown.structural_component.value}) vs. ${lower.score_breakdown.structural_component.value}.`;
+    const fallback = `Ranked above due to higher combined citizen demand (${higher.score_breakdown.citizen_component.value}) and structural need (${higher.score_breakdown.structural_component.value}) vs. ${lower.score_breakdown.structural_component.value}.`;
+    
+    // Cache fallback too
+    cache.setComparison(higher.proposal_id, lower.proposal_id, fallback);
+    
+    return fallback;
   }
 }
 
@@ -452,4 +731,7 @@ module.exports = {
   STRUCTURAL_DATA,
   CITIZEN_SIGNALS,
   WEIGHTS,
+  cache, // Expose cache for monitoring/debugging
+  getCache: () => cache.stats(), // Get cache stats
+  clearCache: () => cache.clear(), // Manual cache clearing
 };
