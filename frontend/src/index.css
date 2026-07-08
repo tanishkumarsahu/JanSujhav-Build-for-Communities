@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 @theme {
   /* Warm Pastel Design Tokens */
@@ -9,8 +10,6 @@
   --color-brand-dark: #5BA3D9;
   --color-brand-deeper: #3B8BC7;
 }
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 * {
   box-sizing: border-box;
