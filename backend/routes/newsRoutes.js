@@ -39,6 +39,25 @@ router.get('/', optionalAuthMiddleware, async (req, res) => {
     };
 
     const parentPC = constituency ? getParentConstituency(constituency) : null;
+
+    if (parentPC) {
+      // Check last fetched time for this constituency to see if it is stale (older than 15 minutes) or empty
+      const { query } = require('../db');
+      const timeResult = await query(
+        `SELECT MAX(fetched_at) as last_fetch FROM constituency_news WHERE constituency = $1`,
+        [parentPC]
+      );
+      const lastFetch = timeResult.rows[0]?.last_fetch;
+      const isStale = !lastFetch || (Date.now() - new Date(lastFetch).getTime() > 15 * 60 * 1000);
+
+      if (isStale) {
+        console.log(`[News] Constituency "${parentPC}" news is stale or missing. Revalidating in background...`);
+        newsService.fetchNewsForConstituency(parentPC)
+          .then(rawArticles => newsService.enrichAndStoreNews(parentPC, rawArticles))
+          .catch(err => console.error(`[News] Background revalidation failed for "${parentPC}":`, err.message));
+      }
+    }
+
     const result = await newsService.getNewsFromDB(
       parentPC,
       filters

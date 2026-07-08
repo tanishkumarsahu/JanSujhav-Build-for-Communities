@@ -346,6 +346,7 @@ const TEHSIL_TO_CONSTITUENCY = {
   'vasant vihar': 'New Delhi',
   'connaught place': 'New Delhi',
   'karol bagh': 'New Delhi',
+  'nithari': 'New Delhi',
   
   // Mumbai North
   'borivali': 'Mumbai North',

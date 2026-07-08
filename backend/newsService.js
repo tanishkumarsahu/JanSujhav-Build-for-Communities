@@ -112,9 +112,10 @@ async function enrichAndStoreNews(constituency, rawArticles) {
         continue;
       }
 
-      // AI enrichment
-      const enrichment = await aiService.enrichNewsArticle(headline, summary);
-      const { category, sentiment, ai_tags } = enrichment;
+      // No AI enrichment — just use defaults to bypass quota and rate limits
+      const category = 'General';
+      const sentiment = 'Neutral';
+      const ai_tags = [];
 
       await query(
         `INSERT INTO constituency_news

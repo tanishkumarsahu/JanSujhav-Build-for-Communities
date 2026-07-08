@@ -2,7 +2,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { query } = require('../db');
+const { query, getParentConstituency } = require('../db');
 const {
   rankAllProposals,
   scoreProposal,
@@ -10,6 +10,50 @@ const {
   STRUCTURAL_DATA,
 } = require('../demandScoring');
 
+
+// Helper to dynamically seed template proposals for a new constituency if they don't exist in the DB
+async function ensureProposalsForConstituency(constituency) {
+  if (!constituency) return;
+  const cName = constituency.trim();
+  try {
+    const { rows: countRows } = await query(
+      'SELECT COUNT(*) as cnt FROM proposals WHERE LOWER(constituency) = LOWER($1)',
+      [cName]
+    );
+    if (parseInt(countRows[0].cnt, 10) === 0) {
+      console.log(`[DB] Dynamically seeding proposals for new constituency: "${cName}"`);
+      const { STRUCTURAL_DATA } = require('../structuralData');
+      for (const [category, proposals] of Object.entries(STRUCTURAL_DATA)) {
+        for (const p of proposals) {
+          const newId = `${p.proposal_id}_${cName.replace(/\s+/g, '_').toLowerCase()}`;
+          const clonedProp = {
+            ...p,
+            proposal_id: newId,
+            constituency: cName,
+          };
+          await query(
+            `INSERT INTO proposals (proposal_id, category, constituency, ward_id, location_lat, location_lng, location_area, structural_data)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+             ON CONFLICT (proposal_id) DO NOTHING`,
+            [
+              newId,
+              category,
+              cName,
+              p.ward_id,
+              p.location?.lat || null,
+              p.location?.lng || null,
+              p.location?.area || null,
+              JSON.stringify(clonedProp)
+            ]
+          );
+        }
+      }
+      console.log(`[DB] Dynamic seeding complete for "${cName}".`);
+    }
+  } catch (err) {
+    console.error(`[DB] ensureProposalsForConstituency error for "${cName}":`, err.message);
+  }
+}
 
 // ---------------------------------------------------------------------------
 // GET /api/proposals/ranked
@@ -20,6 +64,12 @@ router.get('/ranked', async (req, res) => {
   try {
     const { constituency, category, limit: limitStr } = req.query;
     const limit = Math.min(50, Math.max(1, parseInt(limitStr, 10) || 20));
+
+    const parentPC = constituency && constituency.trim() ? getParentConstituency(constituency.trim()) : null;
+
+    if (parentPC) {
+      await ensureProposalsForConstituency(parentPC);
+    }
 
     let ranked = await rankAllProposals();
     let fallback_note = null;
@@ -33,14 +83,14 @@ router.get('/ranked', async (req, res) => {
     };
 
     // Optional filters
-    if (constituency && constituency.trim()) {
+    if (parentPC) {
       const filtered = ranked.filter(p =>
-        p.constituency.toLowerCase() === constituency.trim().toLowerCase()
+        p.constituency.toLowerCase() === parentPC.toLowerCase()
       );
       if (filtered.length > 0) {
         ranked = filtered;
       } else {
-        fallback_note = `No proposals recorded for "${constituency}" yet. Showing all active proposals.`;
+        fallback_note = `No proposals recorded for "${parentPC}" yet. Showing all active proposals.`;
         meta.fallback_note = fallback_note;
       }
     }
