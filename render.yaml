@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: peoples-priorities-backend
+    plan: free
+    runtime: node
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+
+  - type: web
+    name: peoples-priorities-frontend
+    plan: free
+    runtime: node
+    buildCommand: cd frontend && npm install && npm run build
+    startCommand: cd frontend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
