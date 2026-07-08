@@ -2,12 +2,14 @@
 
 const express = require('express');
 const router = express.Router();
-const { query } = require('../db');
+const { query, getParentConstituency } = require('../db');
 const { optionalAuthMiddleware } = require('../auth');
 const aiService = require('../aiService');
 
 const VALID_CATEGORIES = ['Roads', 'Water', 'Education', 'Health', 'Electricity', 'Sanitation', 'Other'];
 const VALID_LANGUAGES = ['en', 'hi', 'ta', 'te', 'kn', 'ml', 'mr', 'gu', 'bn', 'pa', 'or', 'as'];
+
+const CONSTITUENCIES_LIST = require('../constituencies.json');
 
 // ---------------------------------------------------------------------------
 // POST /api/citizen/submit
@@ -71,6 +73,11 @@ router.post('/submit', optionalAuthMiddleware, async (req, res) => {
     const translated_text = enrichment ? enrichment.translated_text : null;
     const ai_tags = enrichment ? JSON.stringify(enrichment.ai_tags || []) : null;
 
+    const parentConstituency = getParentConstituency(constituency);
+    const mappedAddress = address
+      ? `Tehsil: ${constituency.trim()}, ${address.trim()}`
+      : `Tehsil: ${constituency.trim()}`;
+
     const { rows } = await query(
       `INSERT INTO suggestions
          (user_id, title, description, category, language, media_url, media_type,
@@ -87,8 +94,8 @@ router.post('/submit', optionalAuthMiddleware, async (req, res) => {
         media_type || null,
         parsedLat,
         parsedLng,
-        address ? address.trim() : null,
-        constituency.trim(),
+        mappedAddress,
+        parentConstituency,
         sentiment,
         translated_text,
         ai_tags,
@@ -118,21 +125,11 @@ router.get('/categories', (req, res) => {
 // ---------------------------------------------------------------------------
 // GET /api/citizen/constituencies
 // ---------------------------------------------------------------------------
-router.get('/constituencies', async (req, res) => {
-  try {
-    const { rows } = await query(
-      'SELECT constituency FROM demographics ORDER BY constituency ASC',
-      []
-    );
-    const constituencies = rows.map(r => r.constituency);
-    return res.status(200).json({
-      success: true,
-      data: { constituencies },
-    });
-  } catch (err) {
-    console.error('[Citizen] /constituencies error:', err.message);
-    return res.status(500).json({ success: false, error: 'Failed to fetch constituencies' });
-  }
+router.get('/constituencies', (req, res) => {
+  return res.status(200).json({
+    success: true,
+    data: { constituencies: CONSTITUENCIES_LIST },
+  });
 });
 
 // ---------------------------------------------------------------------------

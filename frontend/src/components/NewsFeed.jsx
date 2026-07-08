@@ -5,20 +5,7 @@ import NewsCard from './NewsCard.jsx';
 import NewsFilterPanel from './NewsFilterPanel.jsx';
 import { post } from '../utils/api.js';
 
-const CONSTITUENCIES = [
-  'Select constituency...',
-  'Delhi North',
-  'Delhi South',
-  'Mumbai North',
-  'Mumbai South',
-  'Chennai Central',
-  'Kolkata North',
-  'Bangalore North',
-  'Hyderabad',
-  'Pune',
-  'Lucknow',
-  'Ahmedabad East',
-];
+import ALL_CONSTITUENCIES from '../utils/constituencies.json';
 
 const PAGE_SIZE = 9;
 
@@ -57,14 +44,27 @@ function SkeletonCard() {
  * NewsFeed — constituency news feed with polling, filters, pagination, AI filter
  * Props: { constituency }
  */
-export default function NewsFeed({ constituency: propConstituency }) {
+export default function NewsFeed({ constituency: propConstituency, setConstituency }) {
   const [selectedConstituency, setSelectedConstituency] = useState(propConstituency || '');
+  const [searchQuery, setSearchQuery] = useState(propConstituency || '');
+  const [isOpen, setIsOpen] = useState(false);
   const [filters, setFilters] = useState({ category: 'All', sentiment: 'All', date: 'All', keyword: '', page: 1 });
   const [aiFilterActive, setAiFilterActive] = useState(false);
   const [aiFilterLoading, setAiFilterLoading] = useState(false);
   const [page, setPage] = useState(1);
 
+  useEffect(() => {
+    if (propConstituency) {
+      setSelectedConstituency(propConstituency);
+      setSearchQuery(propConstituency);
+    }
+  }, [propConstituency]);
+
   const activeConstituency = selectedConstituency || propConstituency;
+
+  const filteredConstituencies = ALL_CONSTITUENCIES.filter((c) =>
+    c.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const { articles, total, loading, error, lastRefreshedAt, refresh } = useNewsPolling({
     constituency: activeConstituency,
@@ -158,11 +158,39 @@ export default function NewsFeed({ constituency: propConstituency }) {
           </button>
 
           {/* Constituency override */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', position: 'relative' }}>
             <MapPin size={14} color="#64748B" />
-            <select
-              value={selectedConstituency}
-              onChange={(e) => setSelectedConstituency(e.target.value === 'Select constituency...' ? '' : e.target.value)}
+            <input
+              type="text"
+              placeholder="Search constituency..."
+              value={searchQuery}
+              onChange={(e) => {
+                const val = e.target.value;
+                setSearchQuery(val);
+                setIsOpen(true);
+                
+                const match = ALL_CONSTITUENCIES.find(c => c.toLowerCase() === val.toLowerCase().trim());
+                if (match) {
+                  setSelectedConstituency(match);
+                  if (setConstituency) setConstituency(match);
+                } else if (val.trim() === '') {
+                  setSelectedConstituency('');
+                }
+              }}
+              onFocus={() => setIsOpen(true)}
+              onBlur={() => {
+                setTimeout(() => {
+                  setIsOpen(false);
+                  const match = ALL_CONSTITUENCIES.find(c => c.toLowerCase() === searchQuery.toLowerCase().trim());
+                  if (match) {
+                    setSearchQuery(match);
+                    setSelectedConstituency(match);
+                    if (setConstituency) setConstituency(match);
+                  } else {
+                    setSearchQuery(selectedConstituency || '');
+                  }
+                }, 250);
+              }}
               style={{
                 padding: '7px 10px',
                 border: '1px solid #E2E8F0',
@@ -171,14 +199,52 @@ export default function NewsFeed({ constituency: propConstituency }) {
                 fontFamily: 'inherit',
                 color: '#0F172A',
                 background: '#FFFFFF',
-                cursor: 'pointer',
                 outline: 'none',
+                width: '160px'
               }}
-            >
-              {CONSTITUENCIES.map((c) => (
-                <option key={c} value={c === 'Select constituency...' ? '' : c}>{c}</option>
-              ))}
-            </select>
+            />
+            {isOpen && (
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                right: 0,
+                width: '200px',
+                maxHeight: '200px',
+                overflowY: 'auto',
+                backgroundColor: '#FFFFFF',
+                border: '1px solid #E2E8F0',
+                borderRadius: '7px',
+                zIndex: 100,
+                marginTop: '4px',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)'
+              }}>
+                {filteredConstituencies.slice(0, 50).length === 0 ? (
+                  <div style={{ padding: '8px 12px', color: '#64748B', fontSize: '12px' }}>No matches</div>
+                ) : (
+                  filteredConstituencies.slice(0, 50).map((c) => (
+                    <div
+                      key={c}
+                      onClick={() => {
+                        setSearchQuery(c);
+                        setSelectedConstituency(c);
+                        if (setConstituency) setConstituency(c);
+                        setIsOpen(false);
+                      }}
+                      style={{
+                        padding: '8px 12px',
+                        cursor: 'pointer',
+                        fontSize: '12px',
+                        color: '#0F172A',
+                        borderBottom: '1px solid #F1F5F9',
+                        backgroundColor: activeConstituency === c ? '#EFF6FF' : '#FFFFFF'
+                      }}
+                    >
+                      {c}
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -200,6 +200,10 @@ async function initializeDatabase() {
   console.log('[DB] Running schema migrations...');
   try {
     await pool.query(CREATE_TABLES_SQL);
+    // Alter table migrations for pre-existing schemas
+    await pool.query('ALTER TABLE suggestions ADD COLUMN IF NOT EXISTS ai_tags JSONB');
+    await pool.query('ALTER TABLE suggestions ADD COLUMN IF NOT EXISTS translated_text TEXT');
+    await pool.query('ALTER TABLE suggestions ADD COLUMN IF NOT EXISTS sentiment VARCHAR(50)');
     console.log('[DB] Schema ready.');
   } catch (err) {
     console.error('[DB] Schema migration failed:', err.message);
@@ -276,4 +280,51 @@ async function initializeDatabase() {
   console.log('[DB] initializeDatabase complete.');
 }
 
-module.exports = { pool, query, initializeDatabase };
+const TEHSIL_TO_CONSTITUENCY = {
+  // Varanasi
+  'varanasi': 'Varanasi',
+  'pindra': 'Varanasi',
+  'raja talab': 'Varanasi',
+  
+  // Lucknow
+  'lucknow': 'Lucknow',
+  'malihabad': 'Lucknow',
+  'bakshi ka talab': 'Lucknow',
+  'mohanlalganj': 'Lucknow',
+  'chinhat': 'Lucknow',
+  'kakori': 'Lucknow',
+  
+  // New Delhi
+  'new delhi': 'New Delhi',
+  'chanakyapuri': 'New Delhi',
+  'delhi cantonment': 'New Delhi',
+  'vasant vihar': 'New Delhi',
+  'connaught place': 'New Delhi',
+  'karol bagh': 'New Delhi',
+  
+  // Mumbai North
+  'borivali': 'Mumbai North',
+  'kandivali': 'Mumbai North',
+  'dahisar': 'Mumbai North',
+  'malad': 'Mumbai North',
+  
+  // Bengaluru Central
+  'bengaluru north': 'Bengaluru Central',
+  'bengaluru south': 'Bengaluru Central',
+  'bengaluru east': 'Bengaluru Central',
+  'shivajinagar': 'Bengaluru Central',
+  'vasanth nagar': 'Bengaluru Central'
+};
+
+/**
+ * Maps a Tehsil/Taluk name to its parent Parliamentary Constituency.
+ * @param {string} tehsilName 
+ * @returns {string} parent constituency
+ */
+function getParentConstituency(tehsilName) {
+  if (!tehsilName) return 'Varanasi';
+  const key = tehsilName.trim().toLowerCase();
+  return TEHSIL_TO_CONSTITUENCY[key] || tehsilName.trim();
+}
+
+module.exports = { pool, query, initializeDatabase, getParentConstituency };

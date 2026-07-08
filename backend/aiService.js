@@ -87,6 +87,39 @@ async function getModel() {
   return genAI.getGenerativeModel({ model: modelName });
 }
 
+const FALLBACK_MODELS = ['gemma-2-27b-it', 'gemma-2-9b-it', 'gemini-1.5-flash'];
+
+/**
+ * Helper to call generateContent with sequential fallbacks.
+ * @param {string} prompt 
+ * @returns {Promise<string>} raw response text
+ */
+async function generateContentWithFallbacks(prompt) {
+  const primaryModelName = await getActiveModel();
+  const modelsToTry = [primaryModelName, ...FALLBACK_MODELS];
+  
+  const genAI = getGeminiClient();
+  let lastError = null;
+  
+  for (const modelName of modelsToTry) {
+    try {
+      console.log(`[AI] Attempting generateContent with model: ${modelName}`);
+      const modelInstance = genAI.getGenerativeModel({ model: modelName });
+      const result = await modelInstance.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+      if (text) {
+        return text;
+      }
+    } catch (err) {
+      console.warn(`[AI] Model ${modelName} failed:`, err.message);
+      lastError = err;
+    }
+  }
+  
+  throw lastError || new Error('All generative models failed');
+}
+
 // ---------------------------------------------------------------------------
 // analyzeSuggestion
 // ---------------------------------------------------------------------------
@@ -102,8 +135,6 @@ async function analyzeSuggestion(description, language = 'en') {
     if (!description || description.trim().length === 0) {
       return null;
     }
-
-    const model = await getModel();
 
     const prompt = `You are an AI assistant for a constituency development platform in India.
 Analyze the following citizen suggestion and return a JSON object with exactly these fields:
@@ -123,9 +154,7 @@ ${description}
 
 IMPORTANT: Return ONLY the raw JSON object. No markdown fences, no explanation.`;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    const text = await generateContentWithFallbacks(prompt);
 
     const parsed = safeParseJSON(text);
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
@@ -164,8 +193,6 @@ IMPORTANT: Return ONLY the raw JSON object. No markdown fences, no explanation.`
  */
 async function generateRecommendations(constituency, suggestions, demographics, infrastructureGaps) {
   try {
-    const model = await getModel();
-
     const categoryCount = {};
     for (const s of suggestions) {
       categoryCount[s.category] = (categoryCount[s.category] || 0) + 1;
@@ -202,9 +229,7 @@ Sort by priority_score descending. Consider population, literacy, income level, 
 
 IMPORTANT: Return ONLY the raw JSON array. No markdown, no fences, no extra text.`;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    const text = await generateContentWithFallbacks(prompt);
 
     const parsed = safeParseJSON(text);
     if (!Array.isArray(parsed)) {
@@ -248,8 +273,6 @@ async function filterNewsByQuery(queryString, articles) {
       return articles.map(a => a.id);
     }
 
-    const model = await getModel();
-
     const prompt = `You are an AI news relevance engine for a constituency development platform.
 
 Given the user query and a list of news articles, return the IDs of articles that are relevant to the query, sorted by relevance (most relevant first).
@@ -264,9 +287,7 @@ Example: [12, 7, 3]
 
 IMPORTANT: Return ONLY the raw JSON array of IDs. No markdown, no fences, no explanation.`;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    const text = await generateContentWithFallbacks(prompt);
 
     const parsed = safeParseJSON(text);
     if (!Array.isArray(parsed)) {
@@ -299,8 +320,6 @@ async function enrichNewsArticle(headline, summary) {
   try {
     if (!headline) return defaults;
 
-    const model = await getModel();
-
     const prompt = `You are a news classification AI for an Indian constituency development platform.
 
 Given this news article, return a JSON object with:
@@ -315,9 +334,7 @@ Summary: "${summary || ''}"
 
 IMPORTANT: Return ONLY the raw JSON object. No markdown, no fences, no explanation.`;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    const text = await generateContentWithFallbacks(prompt);
 
     const parsed = safeParseJSON(text);
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {

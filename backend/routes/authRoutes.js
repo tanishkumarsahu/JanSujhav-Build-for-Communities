@@ -2,7 +2,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { query } = require('../db');
+const { query, getParentConstituency } = require('../db');
 const {
   generateToken,
   authMiddleware,
@@ -207,9 +207,11 @@ router.put('/me/constituency', authMiddleware, async (req, res) => {
       return res.status(400).json({ success: false, error: 'Constituency name is required' });
     }
 
+    const parentPC = getParentConstituency(constituency);
+
     const { rows } = await query(
       'UPDATE users SET constituency = $1 WHERE id = $2 RETURNING *',
-      [constituency.trim(), req.user.id]
+      [parentPC, req.user.id]
     );
 
     if (rows.length === 0) {

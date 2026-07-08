@@ -3,6 +3,7 @@
 const cron = require('node-cron');
 const { query } = require('./db');
 const { fetchNewsForConstituency, enrichAndStoreNews } = require('./newsService');
+const aiService = require('./aiService');
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -113,6 +114,7 @@ function startNewsPoller() {
   cronJob = cron.schedule(cronExpr, async () => {
     try {
       await pollOnce();
+      await enrichPendingSuggestions();
     } catch (err) {
       console.error('[NewsPoller] Unhandled error in cron tick:', err.message);
     }
@@ -135,4 +137,54 @@ function stopNewsPoller() {
   }
 }
 
-module.exports = { startNewsPoller, stopNewsPoller, pollOnce };
+/**
+ * Scans the database for suggestions that failed raw AI processing (sentiment IS NULL)
+ * and processes them sequentially in the background.
+ */
+async function enrichPendingSuggestions() {
+  console.log('[SuggestionEnricher] Checking for unenriched suggestions...');
+  try {
+    const { rows: pending } = await query(
+      'SELECT id, description, language FROM suggestions WHERE sentiment IS NULL ORDER BY created_at ASC LIMIT 10',
+      []
+    );
+
+    if (pending.length === 0) {
+      console.log('[SuggestionEnricher] No pending suggestions to enrich.');
+      return;
+    }
+
+    console.log(`[SuggestionEnricher] Found ${pending.length} pending suggestions to enrich.`);
+
+    const validCategories = ['Roads', 'Water', 'Education', 'Health', 'Electricity', 'Sanitation', 'Other'];
+    const validSentiments = ['Positive', 'Negative', 'Neutral'];
+
+    for (const s of pending) {
+      try {
+        console.log(`[SuggestionEnricher] Processing suggestion ID: ${s.id}...`);
+        const enrichment = await aiService.analyzeSuggestion(s.description, s.language || 'en');
+        if (enrichment) {
+          const category = validCategories.includes(enrichment.category) ? enrichment.category : 'Other';
+          const sentiment = validSentiments.includes(enrichment.sentiment) ? enrichment.sentiment : 'Neutral';
+          const translated_text = enrichment.translated_text || null;
+          const ai_tags = JSON.stringify(enrichment.ai_tags || []);
+
+          await query(
+            `UPDATE suggestions 
+             SET category = $1, sentiment = $2, translated_text = $3, ai_tags = $4 
+             WHERE id = $5`,
+            [category, sentiment, translated_text, ai_tags, s.id]
+          );
+          console.log(`[SuggestionEnricher] Suggestion ID: ${s.id} enriched successfully.`);
+        }
+      } catch (err) {
+        console.error(`[SuggestionEnricher] Error enriching suggestion ID: ${s.id}:`, err.message);
+      }
+      await sleep(100);
+    }
+  } catch (err) {
+    console.error('[SuggestionEnricher] Error in background enrichment:', err.message);
+  }
+}
+
+module.exports = { startNewsPoller, stopNewsPoller, pollOnce, enrichPendingSuggestions };

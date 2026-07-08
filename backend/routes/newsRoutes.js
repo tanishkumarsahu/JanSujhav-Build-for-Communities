@@ -3,6 +3,7 @@
 const express = require('express');
 const router = express.Router();
 const { authMiddleware, optionalAuthMiddleware } = require('../auth');
+const { getParentConstituency } = require('../db');
 const newsService = require('../newsService');
 const aiService = require('../aiService');
 
@@ -37,8 +38,9 @@ router.get('/', optionalAuthMiddleware, async (req, res) => {
       limit: limit || 20,
     };
 
+    const parentPC = constituency ? getParentConstituency(constituency) : null;
     const result = await newsService.getNewsFromDB(
-      constituency ? constituency.trim() : null,
+      parentPC,
       filters
     );
 
@@ -64,8 +66,9 @@ router.post('/ai-filter', optionalAuthMiddleware, async (req, res) => {
     }
 
     // Fetch a large batch to filter from (up to 100 articles)
+    const parentPC = constituency ? getParentConstituency(constituency) : null;
     const dbResult = await newsService.getNewsFromDB(
-      constituency ? constituency.trim() : null,
+      parentPC,
       { page: 1, limit: 100 }
     );
 
@@ -139,10 +142,10 @@ router.post('/refresh', authMiddleware, async (req, res) => {
       return res.status(400).json({ success: false, error: 'constituency is required' });
     }
 
-    const c = constituency.trim();
+    const parentPC = getParentConstituency(constituency);
 
-    const rawArticles = await newsService.fetchNewsForConstituency(c);
-    const stored = await newsService.enrichAndStoreNews(c, rawArticles);
+    const rawArticles = await newsService.fetchNewsForConstituency(parentPC);
+    const stored = await newsService.enrichAndStoreNews(parentPC, rawArticles);
 
     return res.status(200).json({
       success: true,

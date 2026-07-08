@@ -74,6 +74,11 @@ export default function useLocation() {
     setLoading(false);
   }, []);
 
+  const updateConstituency = useCallback((name) => {
+    setConstituency(name);
+    localStorage.setItem(STORAGE_KEY, name);
+  }, []);
+
   useEffect(() => {
     // Only auto-detect if we don't already have a cached constituency
     if (!constituency) {
@@ -81,5 +86,13 @@ export default function useLocation() {
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  return { constituency, lat, lon, loading, error, retry: detect };
+  return { 
+    constituency, 
+    lat, 
+    lon, 
+    loading, 
+    error, 
+    retry: detect, 
+    setConstituency: updateConstituency 
+  };
 }

@@ -6,7 +6,7 @@ import WhatsAppSimulation from './components/WhatsAppSimulation.jsx';
 import MPDashboard from './components/MPDashboard.jsx';
 import NewsFeed from './components/NewsFeed.jsx';
 import useLocation from './hooks/useLocation.js';
-import { post, setToken, clearToken, getToken } from './utils/api.js';
+import { post, put, setToken, clearToken, getToken } from './utils/api.js';
 import { MapPin, Mic, BarChart2, Newspaper, Send, LayoutDashboard, Loader, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
@@ -511,15 +511,25 @@ function AppContent() {
 
   const navigate = useNavigate();
   const location = useRouteLocation();
-  const { constituency, lat, lon } = useLocation();
+  const { constituency, lat, lon, setConstituency } = useLocation();
+
+  // If user profile has a saved constituency, sync it globally on mount/login
+  useEffect(() => {
+    if (user?.constituency && user.constituency !== constituency) {
+      setConstituency(user.constituency);
+    }
+  }, [user, constituency, setConstituency]);
 
   const handleAuthSuccess = useCallback((userData, authToken) => {
     setUser(userData);
     localStorage.setItem('pp_user', JSON.stringify(userData));
     if (authToken) setToken(authToken);
+    if (userData?.constituency) {
+      setConstituency(userData.constituency);
+    }
     const nextPath = userData?.role === 'mp' ? '/mp-dashboard' : '/citizen';
     navigate(nextPath);
-  }, [navigate]);
+  }, [navigate, setConstituency]);
 
   const handleLogout = useCallback(() => {
     setUser(null);
@@ -541,6 +551,22 @@ function AppContent() {
     };
     navigate(viewToRoute[targetView] || '/');
   }, [navigate]);
+
+  const handleConstituencyChange = useCallback(async (newVal) => {
+    if (!newVal) return;
+    setConstituency(newVal);
+
+    if (user) {
+      try {
+        await put('/api/auth/me/constituency', { constituency: newVal });
+        const updatedUser = { ...user, constituency: newVal };
+        setUser(updatedUser);
+        localStorage.setItem('pp_user', JSON.stringify(updatedUser));
+      } catch (err) {
+        console.error('Failed to sync constituency override to user profile:', err.message);
+      }
+    }
+  }, [user, setConstituency]);
 
   const getActiveView = () => {
     const path = location.pathname;
@@ -569,7 +595,7 @@ function AppContent() {
           <Route path="/" element={<LandingPage onNavigate={handleNavigate} constituency={constituency} />} />
           <Route path="/login" element={<AuthForm mode="login" onSuccess={handleAuthSuccess} onSwitch={() => navigate('/register')} />} />
           <Route path="/register" element={<AuthForm mode="register" onSuccess={handleAuthSuccess} onSwitch={() => navigate('/login')} />} />
-          <Route path="/citizen" element={<CitizenSubmissionForm constituency={constituency} />} />
+          <Route path="/citizen" element={<CitizenSubmissionForm constituency={constituency} setConstituency={handleConstituencyChange} />} />
           <Route path="/whatsapp" element={<WhatsAppSimulation constituency={constituency} />} />
           <Route path="/mp-dashboard" element={
             user && user.role === 'mp' ? (
@@ -578,7 +604,7 @@ function AppContent() {
               <Navigate to="/login" replace />
             )
           } />
-          <Route path="/news" element={<NewsFeed constituency={constituency} />} />
+          <Route path="/news" element={<NewsFeed constituency={constituency} setConstituency={handleConstituencyChange} />} />
           <Route path="/settings" element={
             user ? (
               <SettingsPage user={user} onLogout={handleLogout} />

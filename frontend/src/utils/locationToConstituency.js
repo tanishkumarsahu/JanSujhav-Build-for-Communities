@@ -1,6 +1,42 @@
 /**
- * Reverse geocode lat/lon → constituency name via Nominatim (OpenStreetMap)
- * Priority: county > state_district > city_district > suburb > city
+ * Extract Tehsil/Taluk from address details, matching against our supported seeds list if possible.
+ */
+export function getTehsilFromAddress(addr) {
+  if (!addr) return null;
+
+  const fields = [
+    addr.subdistrict,
+    addr.suburb,
+    addr.city_district,
+    addr.town,
+    addr.village,
+    addr.city,
+    addr.county
+  ].filter(Boolean);
+
+  const supportedTehsils = [
+    'Varanasi', 'Pindra', 'Raja Talab',
+    'Lucknow', 'Malihabad', 'Bakshi Ka Talab', 'Mohanlalganj', 'Chinhat', 'Kakori',
+    'New Delhi', 'Chanakyapuri', 'Delhi Cantonment', 'Vasant Vihar', 'Connaught Place', 'Karol Bagh',
+    'Borivali', 'Kandivali', 'Dahisar', 'Malad',
+    'Bengaluru North', 'Bengaluru South', 'Bengaluru East', 'Shivajinagar', 'Vasanth Nagar'
+  ];
+
+  for (const f of fields) {
+    const val = f.toLowerCase().trim();
+    for (const t of supportedTehsils) {
+      if (val.includes(t.toLowerCase()) || t.toLowerCase().includes(val)) {
+        return t;
+      }
+    }
+  }
+
+  // Fallback to first available address field
+  return fields[0] || null;
+}
+
+/**
+ * Reverse geocode lat/lon → Tehsil name via Nominatim (OpenStreetMap)
  */
 export async function reverseGeocode(lat, lon) {
   try {
@@ -22,17 +58,7 @@ export async function reverseGeocode(lat, lon) {
 
     if (!addr) return null;
 
-    const constituency =
-      addr.county ||
-      addr.state_district ||
-      addr.city_district ||
-      addr.suburb ||
-      addr.city ||
-      addr.town ||
-      addr.village ||
-      null;
-
-    return constituency || null;
+    return getTehsilFromAddress(addr);
   } catch (err) {
     console.warn('reverseGeocode failed:', err.message);
     return null;

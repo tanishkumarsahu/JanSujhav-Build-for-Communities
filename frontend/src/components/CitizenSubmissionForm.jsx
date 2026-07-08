@@ -7,6 +7,7 @@ import {
 import useVoiceInput from '../hooks/useVoiceInput.js';
 import useLocation from '../hooks/useLocation.js';
 import { post, get } from '../utils/api.js';
+import ALL_CONSTITUENCIES from '../utils/constituencies.json';
 
 const CATEGORIES = [
   { id: 'Roads', label: 'Roads', icon: Route, desc: 'Potholes, paving, traffic lights' },
@@ -71,7 +72,7 @@ function inputStyle(focused, hasError) {
   };
 }
 
-export default function CitizenSubmissionForm({ constituency: propConstituency, onSuccess }) {
+export default function CitizenSubmissionForm({ constituency: propConstituency, setConstituency, onSuccess }) {
   const { constituency: detectedConstituency, lat, lon, loading: locationLoading, retry: retryLocation } = useLocation();
 
   const [form, setForm] = useState({
@@ -81,7 +82,9 @@ export default function CitizenSubmissionForm({ constituency: propConstituency, 
     title: '',
     description: '',
   });
-  const [constituencies, setConstituencies] = useState([]);
+  const [constituencies, setConstituencies] = useState(ALL_CONSTITUENCIES);
+  const [searchQuery, setSearchQuery] = useState(propConstituency || '');
+  const [isOpen, setIsOpen] = useState(false);
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
   const [voiceLang, setVoiceLang] = useState('en-IN');
@@ -94,24 +97,54 @@ export default function CitizenSubmissionForm({ constituency: propConstituency, 
 
   const descriptionRef = useRef(null);
   const fileInputRef = useRef(null);
+  const gpsTriggeredRef = useRef(false);
+
+  const handleGPSClick = () => {
+    gpsTriggeredRef.current = true;
+    retryLocation();
+  };
+
+  // Sync prop constituency (when changed globally)
+  useEffect(() => {
+    if (propConstituency) {
+      setForm((prev) => ({ ...prev, constituency: propConstituency }));
+    }
+  }, [propConstituency]);
 
   // Sync detected constituency
   useEffect(() => {
-    if (detectedConstituency && !form.constituency) {
-      setForm((prev) => ({ ...prev, constituency: detectedConstituency }));
+    if (detectedConstituency) {
+      if (gpsTriggeredRef.current || !form.constituency) {
+        setForm((prev) => ({ ...prev, constituency: detectedConstituency }));
+        setSearchQuery(detectedConstituency);
+        if (setConstituency) setConstituency(detectedConstituency);
+        gpsTriggeredRef.current = false;
+      }
     }
-  }, [detectedConstituency]);
+  }, [detectedConstituency, locationLoading, setConstituency]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Keep search box in sync with form state
+  useEffect(() => {
+    setSearchQuery(form.constituency || '');
+  }, [form.constituency]);
 
   // Load constituency list
   useEffect(() => {
     get('/api/citizen/constituencies', false)
-      .then((data) => setConstituencies(Array.isArray(data) ? data : data?.constituencies || []))
+      .then((res) => {
+        const list = res?.data?.constituencies || res?.constituencies || [];
+        if (list.length > 0) {
+          setConstituencies(list);
+        }
+      })
       .catch(() => {
-        setConstituencies([
-          'Varanasi', 'Lucknow', 'New Delhi', 'Mumbai North', 'Bengaluru Central'
-        ]);
+        setConstituencies(ALL_CONSTITUENCIES);
       });
   }, []);
+
+  const filteredConstituencies = constituencies.filter((c) =>
+    c.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const handleVoiceResult = useCallback((transcript) => {
     setForm((prev) => ({
@@ -144,9 +177,23 @@ export default function CitizenSubmissionForm({ constituency: propConstituency, 
 
   const validate = () => {
     const errors = {};
-    if (!form.title.trim()) errors.title = 'Please provide a brief title.';
-    if (!form.description.trim()) errors.description = 'Please describe your suggestion.';
-    if (!form.constituency.trim()) errors.constituency = 'Constituency is required.';
+    if (!form.title.trim()) {
+      errors.title = 'Please provide a brief title.';
+    } else if (form.title.trim().length < 5) {
+      errors.title = 'Title must be at least 5 characters.';
+    }
+
+    if (!form.description.trim()) {
+      errors.description = 'Please describe your suggestion.';
+    } else if (form.description.trim().length < 20) {
+      errors.description = 'Description must be at least 20 characters.';
+    }
+
+    if (!form.constituency.trim()) {
+      errors.constituency = 'Constituency is required.';
+    } else if (!constituencies.includes(form.constituency)) {
+      errors.constituency = 'Please select a valid constituency from the list.';
+    }
     return errors;
   };
 
@@ -168,17 +215,19 @@ export default function CitizenSubmissionForm({ constituency: propConstituency, 
 
     setSubmitting(true);
     try {
-      const formData = new FormData();
-      formData.append('name', form.name || 'Anonymous');
-      formData.append('constituency', form.constituency);
-      formData.append('category', form.category || 'Other');
-      formData.append('title', form.title);
-      formData.append('description', form.description);
-      if (lat) formData.append('lat', lat);
-      if (lon) formData.append('lon', lon);
-      if (photoFile) formData.append('photo', photoFile);
+      const payload = {
+        name: form.name || 'Anonymous',
+        constituency: form.constituency,
+        category: form.category || 'Other',
+        title: form.title.trim(),
+        description: form.description.trim(),
+        location_lat: lat || null,
+        location_lng: lon || null,
+        media_url: photoPreview || null,
+        media_type: photoFile ? 'image' : null
+      };
 
-      const result = await post('/api/citizen/submit', formData, false);
+      const result = await post('/api/citizen/submit', payload, false);
       setSubmitResult(result);
       onSuccess?.(result);
       // Reset form
@@ -357,7 +406,7 @@ export default function CitizenSubmissionForm({ constituency: propConstituency, 
             ) : (
               <button
                 type="button"
-                onClick={retryLocation}
+                onClick={handleGPSClick}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -407,22 +456,111 @@ export default function CitizenSubmissionForm({ constituency: propConstituency, 
 
               <div>
                 <InputLabel required subtitle="Detected automatically or manual override">Target Constituency</InputLabel>
-                <select
-                  name="constituency"
-                  value={form.constituency}
-                  onChange={(e) => setForm({ ...form, constituency: e.target.value })}
-                  onFocus={() => setFocused('constituency', true)}
-                  onBlur={() => setFocused('constituency', false)}
-                  style={{ ...inputStyle(fieldFocused.constituency, !!formErrors.constituency), cursor: 'pointer' }}
-                >
-                  <option value="">Select a constituency...</option>
-                  {detectedConstituency && (
-                    <option value={detectedConstituency}>📍 {detectedConstituency} (Your Location)</option>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type="text"
+                    placeholder="Type to search constituency..."
+                    value={searchQuery}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setSearchQuery(val);
+                      setIsOpen(true);
+                      
+                      // Auto-select exact match
+                      const match = constituencies.find(c => c.toLowerCase() === val.toLowerCase().trim());
+                      if (match) {
+                        setForm((prev) => ({ ...prev, constituency: match }));
+                        if (setConstituency) setConstituency(match);
+                      } else if (val.trim() === '') {
+                        setForm((prev) => ({ ...prev, constituency: '' }));
+                      }
+                    }}
+                    onFocus={() => {
+                      setFocused('constituency', true);
+                      setIsOpen(true);
+                    }}
+                    onBlur={() => {
+                      setFocused('constituency', false);
+                      setTimeout(() => {
+                        setIsOpen(false);
+                        const match = constituencies.find(c => c.toLowerCase() === searchQuery.toLowerCase().trim());
+                        if (match) {
+                          setSearchQuery(match);
+                          setForm((prev) => ({ ...prev, constituency: match }));
+                          if (setConstituency) setConstituency(match);
+                        } else {
+                          // Reset to previous valid selection, preventing custom inputs
+                          setSearchQuery(form.constituency || '');
+                        }
+                      }, 250);
+                    }}
+                    style={{ ...inputStyle(fieldFocused.constituency, !!formErrors.constituency), cursor: 'text' }}
+                  />
+                  {isOpen && (
+                    <div style={{
+                      position: 'absolute',
+                      top: '100%',
+                      left: 0,
+                      right: 0,
+                      maxHeight: '200px',
+                      overflowY: 'auto',
+                      backgroundColor: '#FFFFFF',
+                      border: '1.5px solid #CBD5E1',
+                      borderRadius: '8px',
+                      zIndex: 100,
+                      marginTop: '4px',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)'
+                    }}>
+                      {detectedConstituency && detectedConstituency.toLowerCase().includes(searchQuery.toLowerCase()) && (
+                        <div
+                          onClick={() => {
+                            setSearchQuery(detectedConstituency);
+                            setForm((prev) => ({ ...prev, constituency: detectedConstituency }));
+                            if (setConstituency) setConstituency(detectedConstituency);
+                            setIsOpen(false);
+                          }}
+                          style={{
+                            padding: '10px 14px',
+                            cursor: 'pointer',
+                            fontSize: '13px',
+                            fontWeight: '600',
+                            color: '#2563EB',
+                            borderBottom: '1.5px solid #EFF6FF',
+                            backgroundColor: '#F8FAFC'
+                          }}
+                        >
+                          📍 {detectedConstituency} (Your Location)
+                        </div>
+                      )}
+                      
+                      {filteredConstituencies.slice(0, 100).length === 0 ? (
+                        <div style={{ padding: '10px 14px', color: '#64748B', fontSize: '13px' }}>No matches found</div>
+                      ) : (
+                        filteredConstituencies.slice(0, 100).map((c) => (
+                          <div
+                            key={c}
+                            onClick={() => {
+                              setSearchQuery(c);
+                              setForm((prev) => ({ ...prev, constituency: c }));
+                              if (setConstituency) setConstituency(c);
+                              setIsOpen(false);
+                            }}
+                            style={{
+                              padding: '10px 14px',
+                              cursor: 'pointer',
+                              fontSize: '13px',
+                              color: '#0F172A',
+                              borderBottom: '1.5px solid #F1F5F9',
+                              backgroundColor: form.constituency === c ? '#EFF6FF' : '#FFFFFF'
+                            }}
+                          >
+                            {c}
+                          </div>
+                        ))
+                      )}
+                    </div>
                   )}
-                  {constituencies
-                    .filter((c) => c !== detectedConstituency)
-                    .map((c) => <option key={c} value={c}>{c}</option>)}
-                </select>
+                </div>
                 {formErrors.constituency && (
                   <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#DC2626', fontWeight: 500 }}>{formErrors.constituency}</p>
                 )}
