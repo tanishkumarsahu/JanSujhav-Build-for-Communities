@@ -390,5 +390,5 @@ module.exports = {
   generateRecommendations,
   filterNewsByQuery,
   enrichNewsArticle,
-  generateComparisonNote,
+  generateContentWithFallbacks,
 };

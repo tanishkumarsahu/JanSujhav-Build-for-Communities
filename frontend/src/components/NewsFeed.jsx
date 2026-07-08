@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { RefreshCw, ChevronLeft, ChevronRight, MapPin, X } from 'lucide-react';
 import useNewsPolling from '../hooks/useNewsPolling.js';
 import NewsCard from './NewsCard.jsx';
@@ -49,8 +49,6 @@ export default function NewsFeed({ constituency: propConstituency, setConstituen
   const [searchQuery, setSearchQuery] = useState(propConstituency || '');
   const [isOpen, setIsOpen] = useState(false);
   const [filters, setFilters] = useState({ category: 'All', sentiment: 'All', date: 'All', keyword: '', page: 1 });
-  const [aiFilterActive, setAiFilterActive] = useState(false);
-  const [aiFilterLoading, setAiFilterLoading] = useState(false);
   const [page, setPage] = useState(1);
 
   useEffect(() => {
@@ -60,7 +58,7 @@ export default function NewsFeed({ constituency: propConstituency, setConstituen
     }
   }, [propConstituency]);
 
-  const activeConstituency = selectedConstituency || propConstituency;
+  const activeConstituency = selectedConstituency;
 
   const filteredConstituencies = ALL_CONSTITUENCIES.filter((c) =>
     c.toLowerCase().includes(searchQuery.toLowerCase())
@@ -77,29 +75,7 @@ export default function NewsFeed({ constituency: propConstituency, setConstituen
     setPage(1);
   }, []);
 
-  const handleAIFilter = useCallback(async (query) => {
-    setAiFilterLoading(true);
-    try {
-      await post('/api/news/ai-filter', {
-        query,
-        constituency: activeConstituency,
-        current_filters: filters,
-      });
-      setFilters((prev) => ({ ...prev, aiQuery: query, page: 1 }));
-      setAiFilterActive(true);
-      setPage(1);
-    } catch (err) {
-      console.error('AI filter error:', err.message);
-    } finally {
-      setAiFilterLoading(false);
-    }
-  }, [activeConstituency, filters]);
 
-  const handleClearAIFilter = useCallback(() => {
-    setFilters((prev) => { const { aiQuery, ...rest } = prev; return { ...rest, page: 1 }; });
-    setAiFilterActive(false);
-    setPage(1);
-  }, []);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -249,41 +225,10 @@ export default function NewsFeed({ constituency: propConstituency, setConstituen
         </div>
       </div>
 
-      {/* AI Filter active badge */}
-      {aiFilterActive && (
-        <div
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '6px 12px',
-            backgroundColor: '#EFF6FF',
-            border: '1px solid #BFDBFE',
-            borderRadius: '6px',
-            fontSize: '13px',
-            color: '#2563EB',
-            fontWeight: 600,
-            marginBottom: '12px',
-          }}
-        >
-          ⚡ AI Filter Active
-          <button
-            onClick={handleClearAIFilter}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0', display: 'flex', alignItems: 'center', color: '#2563EB' }}
-          >
-            <X size={14} />
-          </button>
-        </div>
-      )}
-
       {/* Filter panel */}
       <NewsFilterPanel
         filters={filters}
         onFilterChange={handleFilterChange}
-        onAIFilter={handleAIFilter}
-        onClearAIFilter={handleClearAIFilter}
-        aiFilterLoading={aiFilterLoading}
-        aiFilterActive={aiFilterActive}
         constituency={activeConstituency}
       />
 

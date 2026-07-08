@@ -1,4 +1,4 @@
-import { MapPin, LayoutDashboard, Send, Newspaper, LogOut, ChevronDown } from 'lucide-react';
+import { MapPin, LayoutDashboard, Send, Newspaper, TrendingUp, LogOut, ChevronDown } from 'lucide-react';
 import { useState } from 'react';
 
 /**
@@ -117,6 +117,7 @@ export default function Navbar({ user, onNavigate, onLogout, currentView }) {
       >
         {navLink('citizen', 'Submit', Send)}
         {navLink('news', 'News', Newspaper)}
+        {navLink('proposals', 'Priorities', TrendingUp)}
         {navLink('whatsapp', 'WhatsApp Demo', Send)}
         {user?.role === 'mp' && navLink('mp-dashboard', 'Dashboard', LayoutDashboard)}
       </div>

@@ -5,6 +5,7 @@ import CitizenSubmissionForm from './components/CitizenSubmissionForm.jsx';
 import WhatsAppSimulation from './components/WhatsAppSimulation.jsx';
 import MPDashboard from './components/MPDashboard.jsx';
 import NewsFeed from './components/NewsFeed.jsx';
+import ProposalRanking from './components/ProposalRanking.jsx';
 import useLocation from './hooks/useLocation.js';
 import { get, post, put, setToken, clearToken, getToken } from './utils/api.js';
 import { MapPin, Mic, BarChart2, Newspaper, Send, LayoutDashboard, Loader, AlertCircle, Eye, EyeOff, User, Lock, Globe, CheckCircle } from 'lucide-react';
@@ -912,6 +913,15 @@ function SettingsPage({ user, onLogout, onUpdateUser }) {
   );
 }
 
+// ─── Proposal Ranking Page ────────────────────────────────────────────────────
+function ProposalRankingPage({ constituency }) {
+  return (
+    <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '24px 20px' }}>
+      <ProposalRanking constituency={constituency} />
+    </div>
+  );
+}
+
 // ─── App (root) ───────────────────────────────────────────────────────────────
 // ─── App (root) ───────────────────────────────────────────────────────────────
 function AppContent() {
@@ -987,6 +997,7 @@ function AppContent() {
       'whatsapp': '/whatsapp',
       'mp-dashboard': '/mp-dashboard',
       'news': '/news',
+      'proposals': '/proposals',
       'settings': '/settings'
     };
     navigate(viewToRoute[targetView] || '/');
@@ -1017,6 +1028,7 @@ function AppContent() {
     if (path === '/whatsapp') return 'whatsapp';
     if (path === '/mp-dashboard') return 'mp-dashboard';
     if (path === '/news') return 'news';
+    if (path === '/proposals') return 'proposals';
     if (path === '/settings') return 'settings';
     return 'landing';
   };
@@ -1037,6 +1049,7 @@ function AppContent() {
           <Route path="/register" element={<AuthForm mode="register" onSuccess={handleAuthSuccess} onSwitch={() => navigate('/login')} />} />
           <Route path="/citizen" element={<CitizenSubmissionForm constituency={constituency} setConstituency={handleConstituencyChange} />} />
           <Route path="/whatsapp" element={<WhatsAppSimulation constituency={constituency} />} />
+          <Route path="/proposals" element={<ProposalRankingPage constituency={constituency} />} />
           <Route path="/mp-dashboard" element={
             user && user.role === 'mp' ? (
               <MPDashboard constituency={constituency} />
