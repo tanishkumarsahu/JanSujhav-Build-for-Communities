@@ -1,0 +1,38 @@
+name: Keep Server Alive
+
+on:
+  schedule:
+    # Run every 12 minutes to prevent Render free-tier services from spinning down (15 min inactivity threshold)
+    - cron: '*/12 * * * *'
+  workflow_dispatch: # Allows manual trigger from GitHub Actions tab
+
+jobs:
+  keep-alive:
+    name: Ping Services
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Backend Service
+        env:
+          BACKEND_URL: ${{ secrets.BACKEND_URL || 'https://jansujhav-build-for-communities.onrender.com/health' }}
+        run: |
+          echo "Pinging backend at $BACKEND_URL..."
+          STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" -L "$BACKEND_URL")
+          echo "Backend returned HTTP status code: $STATUS_CODE"
+          if [ "$STATUS_CODE" -eq 200 ]; then
+            echo "Backend is active and healthy!"
+          else
+            echo "::warning::Backend did not return 200 OK. Got status: $STATUS_CODE"
+          fi
+
+      - name: Ping Frontend Service
+        env:
+          FRONTEND_URL: ${{ secrets.FRONTEND_URL || 'https://peoples-priorities-frontend.onrender.com/health' }}
+        run: |
+          echo "Pinging frontend at $FRONTEND_URL..."
+          STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" -L "$FRONTEND_URL")
+          echo "Frontend returned HTTP status code: $STATUS_CODE"
+          if [ "$STATUS_CODE" -eq 200 ]; then
+            echo "Frontend is active and healthy!"
+          else
+            echo "::warning::Frontend did not return 200 OK. Got status: $STATUS_CODE"
+          fi
